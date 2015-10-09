@@ -60,6 +60,7 @@ class DataProcessor
   end
 
   private
+  #this should be an object
   def process_hash(hash)
     #if it was an empty excel row in the past! Yuck!
     if hash['Name (First)'] == 0
