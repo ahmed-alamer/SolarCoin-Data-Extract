@@ -1,7 +1,3 @@
-require 'main/models/claimant'
-require 'main/models/project'
-require 'main/models/wallet'
-
 class DataProcessor
 
   attr_accessor :file_handler
@@ -10,36 +6,46 @@ class DataProcessor
     @file_handler = data_file_handler
   end
 
-  def read_data
+  def read_data(json_data)
     data_list = Array.new
 
-    (1..16).each do |file_number|
-      hash_list = file_handler.read_json_data_file file_number
-      hash_list.each do |hash|
-        claimant = process_hash hash
-        if claimant != nil
-          data_list << claimant
-        end
+    json_data.each do |json_object|
+      claimant = process_hash json_object
+
+      if claimant != nil
+        data_list << claimant
       end
     end
 
     data_list
   end
 
-  def generate_sql_statements
+  def generate_sql_statements(json_data)
     sql_statements = Array.new
+    claimants = Array.new
+
+    json_data.each do |hash|
+      claimants << Claimant.json_create(hash)
+    end
+
+
 
     #note this is a list of hashes
-    result = file_handler.read_json_file 'result'
+    # result = file_handler.read_json_file 'result'
 
-    result.each do |claimant|
-      sql_statements << convert_hash_to_sql('CLAIMANTS', claimant)
-    end
+    # json_data.each do |claimant_json|
+    #   claimant = JSON.parse claimant_json
+    #   Logger.debug claimant
+    #   claimant.instance_variables.each do |member|
+    #     Logger.debug member, ' = ', member.instance_variable_get
+    #   end
+    #   # sql_statements << convert_hash_to_sql('CLAIMANTS', claimant)
+    # end
 
-    result.each do |claimant|
-      sql_statements << convert_hash_to_sql('PROJECTS', claimant['project'])
-    end
-    file_handler.write_sql_statements sql_statements, 'result'
+    # result.each do |claimant|
+    #   sql_statements << convert_hash_to_sql('PROJECTS', claimant['project'])
+    # end
+    # file_handler.write_sql_statements sql_statements, 'result'
   end
 
   def convert_hash_to_sql(table_name, hash)
@@ -62,7 +68,7 @@ class DataProcessor
   end
 
   private
-  #this should be an object
+  #this should be an hash
   def process_hash(hash)
     #if it was an empty excel row in the past! Yuck!
     if hash['Name (First)'] == 0
@@ -74,10 +80,6 @@ class DataProcessor
 
     #That's a hell of way to return a value! Damn!
     Claimant.new(hash['Name (First)'], hash['Name (Last)'], hash['Claimant Contact Email'], wallet, project)
-  end
-
-  def process_project_hash(project)
-    Logger.debug project
   end
 
 end
