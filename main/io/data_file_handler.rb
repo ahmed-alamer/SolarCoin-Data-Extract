@@ -15,7 +15,7 @@ class DataFileHandler
   end
 
   def write_json_data(result, file_name)
-    File.write "../data/#{file_name}", result.to_json
+    File.write "../data/#{file_name}.json", result.to_json
   end
 
   def write_sql_statements(statements, file_name)

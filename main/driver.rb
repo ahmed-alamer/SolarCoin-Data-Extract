@@ -5,13 +5,15 @@ require '../main/io/logger'
 #TODO: Add the wallets creation logic
 
 def main
-  data_processor = DataProcessor.new
+  DataFileHandler file_handler = DataFileHandler.new
+
+  data_processor = DataProcessor.new(file_handler)
 
   Logger.debug 'Processing'
 
   data = data_processor.read_data
 
-  data_processor.file_handler.write_json_data data, 'result.json'
+  file_handler.write_json_data data, 'result'
 
   data_processor.generate_sql_statements
 

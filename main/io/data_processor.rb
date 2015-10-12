@@ -1,22 +1,24 @@
+require 'main/models/claimant'
+require 'main/models/project'
+require 'main/models/wallet'
+
 class DataProcessor
 
   attr_accessor :file_handler
 
-  def initialize
-    @file_handler = DataFileHandler.new
+  def initialize(data_file_handler)
+    @file_handler = data_file_handler
   end
 
   def read_data
-    data_list = []
-    claimant_id = 0
+    data_list = Array.new
 
     (1..16).each do |file_number|
       hash_list = file_handler.read_json_data_file file_number
       hash_list.each do |hash|
-        processed = process_hash hash
-        if processed != nil
-          processed['id'] = claimant_id += 1
-          data_list << processed
+        claimant = process_hash hash
+        if claimant != nil
+          data_list << claimant
         end
       end
     end
@@ -67,29 +69,11 @@ class DataProcessor
       return nil
     end
 
-    claimant_hash = Hash.new
-    project_hash = Hash.new
+    wallet = Wallet.new(hash['SolarCoin Public Wallet Address'])
+    project = Project.new(hash)
 
-    claimant_hash['first_name'] = hash['Name (First)']
-    claimant_hash['last_name'] = hash['Name (Last)']
-    claimant_hash['email'] = hash['Claimant Contact Email']
-    claimant_hash['wallet'] = hash['SolarCoin Public Wallet Address']
-
-    project_hash['id'] = hash['Entry Id']
-    project_hash['street_address'] = hash['Generator Facility Location (Street Address)']
-    project_hash['street_address_ext'] = hash['Generator Facility Location (Address Line 2)']
-    project_hash['city'] = hash['Generator Facility Location (City)']
-    project_hash['state'] = hash['Generator Facility Location (State / Province)']
-    project_hash['zip_code'] = hash['Generator Facility Location (ZIP / Postal Code)']
-    project_hash['country'] = hash['Generator Facility Location (Country)']
-    project_hash['nameplate'] = hash['Generator Nameplate Capacity (KW - DC Rating)']
-    project_hash['install_date'] = hash['Facility Interconnection Date']
-    project_hash['documentation'] = hash['File Upload']
-    project_hash['status'] = hash['Approval Code']
-
-    claimant_hash['project'] = project_hash
-
-    claimant_hash
+    #That's a hell of way to return a value! Damn!
+    Claimant.new(hash['Name (First)'], hash['Name (Last)'], hash['Claimant Contact Email'], wallet, project)
   end
 
   def process_project_hash(project)
