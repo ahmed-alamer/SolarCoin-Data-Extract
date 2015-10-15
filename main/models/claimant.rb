@@ -10,10 +10,10 @@ class Claimant
     @project = project
   end
 
-  def to_sql_statement
-    'INSERT INTO CLAIMANTS(first_name, last_name, email, wallet_id)'
+  def to_sql_statement(id)
+    'INSERT INTO CLAIMANTS(id, first_name, last_name, email, wallet_id)'
         .concat('VALUES')
-        .concat("('#{@first_name}', '#{@last_name}', '#{@email}', #{@wallet.id})")
+        .concat("(#{id}, \"#{@first_name}\", \"#{@last_name}\", \"#{@email}\");")
   end
 
   #God! I should've done this using Java & Jackson!

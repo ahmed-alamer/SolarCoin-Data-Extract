@@ -9,7 +9,7 @@ class Wallet
   def to_sql_statement(claimant_id)
     'INSERT INTO wallets(public_address, claimant_id)'
         .concat('VALUES')
-        .concat("('#{@public_address}', #{claimant_id})")
+        .concat("(\"#{@public_address}\", #{claimant_id});")
   end
 
   def to_json(*args)

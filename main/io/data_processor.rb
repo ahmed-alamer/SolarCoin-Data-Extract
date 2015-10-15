@@ -2,15 +2,11 @@ class DataProcessor
 
   attr_accessor :file_handler
 
-  def initialize(data_file_handler)
-    @file_handler = data_file_handler
-  end
-
   def read_data(json_data)
     data_list = Array.new
 
     json_data.each do |json_object|
-      claimant = process_hash json_object
+      claimant = process_hash(json_object)
 
       if claimant != nil
         data_list << claimant
@@ -28,24 +24,13 @@ class DataProcessor
       claimants << Claimant.json_create(hash)
     end
 
+    claimants.each_with_index do |claimant, index|
+      sql_statements << claimant.to_sql_statement(index)
+      sql_statements << claimant.wallet.to_sql_statement(index)
+      sql_statements << claimant.project.to_sql_statement(index)
+    end
 
-
-    #note this is a list of hashes
-    # result = file_handler.read_json_file 'result'
-
-    # json_data.each do |claimant_json|
-    #   claimant = JSON.parse claimant_json
-    #   Logger.debug claimant
-    #   claimant.instance_variables.each do |member|
-    #     Logger.debug member, ' = ', member.instance_variable_get
-    #   end
-    #   # sql_statements << convert_hash_to_sql('CLAIMANTS', claimant)
-    # end
-
-    # result.each do |claimant|
-    #   sql_statements << convert_hash_to_sql('PROJECTS', claimant['project'])
-    # end
-    # file_handler.write_sql_statements sql_statements, 'result'
+    sql_statements
   end
 
   def convert_hash_to_sql(table_name, hash)
@@ -68,7 +53,6 @@ class DataProcessor
   end
 
   private
-  #this should be an hash
   def process_hash(hash)
     #if it was an empty excel row in the past! Yuck!
     if hash['Name (First)'] == 0
@@ -76,7 +60,7 @@ class DataProcessor
     end
 
     wallet = Wallet.new(hash['SolarCoin Public Wallet Address'])
-    project = Project.new(hash)
+    project = Project.from_file_hash(hash)
 
     #That's a hell of way to return a value! Damn!
     Claimant.new(hash['Name (First)'], hash['Name (Last)'], hash['Claimant Contact Email'], wallet, project)
