@@ -33,25 +33,6 @@ class DataProcessor
     sql_statements
   end
 
-  def convert_hash_to_sql(table_name, hash)
-    columns_names = hash.keys.to_s.sub('[', '(').sub(']', ')')
-    sql_statement = "INSERT INTO #{table_name} #{columns_names} VALUES("
-
-    hash.each_value do |value|
-      if value.is_a? Fixnum
-        sql_statement = "#{sql_statement} #{value},"
-      elsif value.is_a? String
-        sql_statement = sql_statement.concat('"').concat(value.to_s).concat('",')
-      end
-    end
-
-    sql_statement[-1] = ')' #this way I replace the last comma with a ) YeeHaw! One Step!
-
-    Logger.debug sql_statement
-
-    sql_statement.concat(';')
-  end
-
   private
   def process_hash(hash)
     #if it was an empty excel row in the past! Yuck!
