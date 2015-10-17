@@ -1,21 +1,25 @@
-require '../main/io/data_file_handler'
-require '../main/io/data_processor'
-require '../main/io/logger'
-
-#TODO: Add the wallets creation logic
+require '../main/pom'
 
 def main
+  file_handler = DataFileHandler.new('/home/ahmed/solar-coin-data/')
+
   data_processor = DataProcessor.new
 
-  Logger.debug 'Processing'
+  json_data = file_handler.load_data_from_files
 
-  data = data_processor.read_data
+  Logger.debug('Processing')
 
-  data_processor.file_handler.write_json_data data, 'result.json'
+  data = data_processor.read_data(json_data)
 
-  data_processor.generate_sql_statements
+  file_handler.write_json_file(data, 'result')
 
-  Logger.debug 'Complete!'
+  result = file_handler.read_json_file('result')
+
+  sql_statements = data_processor.generate_sql_statements(result)
+
+  file_handler.write_sql_statements(sql_statements, 'result')
+
+  Logger.debug('Complete!')
 end
 
 #start point

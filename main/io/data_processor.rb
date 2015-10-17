@@ -2,42 +2,35 @@ class DataProcessor
 
   attr_accessor :file_handler
 
-  def initialize
-    @file_handler = DataFileHandler.new
-  end
+  def read_data(json_data)
+    data_list = Array.new
 
-  def read_data
-    data_list = []
-    claimant_id = 0
+    json_data.each do |json_object|
+      claimant = process_hash(json_object)
 
-    (1..16).each do |file_number|
-      hash_list = file_handler.read_json_data_file file_number
-      hash_list.each do |hash|
-        processed = process_hash hash
-        if processed != nil
-          processed['id'] = claimant_id += 1
-          data_list << processed
-        end
+      if claimant != nil
+        data_list << claimant
       end
     end
 
     data_list
   end
 
-  def generate_sql_statements
+  def generate_sql_statements(json_data)
     sql_statements = Array.new
+    claimants = Array.new
 
-    #note this is a list of hashes
-    result = file_handler.read_json_file 'result'
-
-    result.each do |claimant|
-      sql_statements << convert_hash_to_sql('CLAIMANTS', claimant)
+    json_data.each do |hash|
+      claimants << Claimant.json_create(hash)
     end
 
-    result.each do |claimant|
-      sql_statements << convert_hash_to_sql('PROJECTS', claimant['project'])
+    claimants.each_with_index do |claimant, index|
+      sql_statements << claimant.to_sql_statement(index)
+      sql_statements << claimant.wallet.to_sql_statement(index)
+      sql_statements << claimant.project.to_sql_statement(index)
     end
-    file_handler.write_sql_statements sql_statements, 'result'
+
+    sql_statements
   end
 
   def convert_hash_to_sql(table_name, hash)
@@ -66,33 +59,11 @@ class DataProcessor
       return nil
     end
 
-    claimant_hash = Hash.new
-    project_hash = Hash.new
+    wallet = Wallet.new(hash['SolarCoin Public Wallet Address'])
+    project = Project.from_file_hash(hash)
 
-    claimant_hash['first_name'] = hash['Name (First)']
-    claimant_hash['last_name'] = hash['Name (Last)']
-    claimant_hash['email'] = hash['Claimant Contact Email']
-    claimant_hash['wallet'] = hash['SolarCoin Public Wallet Address']
-
-    project_hash['id'] = hash['Entry Id']
-    project_hash['street_address'] = hash['Generator Facility Location (Street Address)']
-    project_hash['street_address_ext'] = hash['Generator Facility Location (Address Line 2)']
-    project_hash['city'] = hash['Generator Facility Location (City)']
-    project_hash['state'] = hash['Generator Facility Location (State / Province)']
-    project_hash['zip_code'] = hash['Generator Facility Location (ZIP / Postal Code)']
-    project_hash['country'] = hash['Generator Facility Location (Country)']
-    project_hash['nameplate'] = hash['Generator Nameplate Capacity (KW - DC Rating)']
-    project_hash['install_date'] = hash['Facility Interconnection Date']
-    project_hash['documentation'] = hash['File Upload']
-    project_hash['status'] = hash['Approval Code']
-
-    claimant_hash['project'] = project_hash
-
-    claimant_hash
-  end
-
-  def process_project_hash(project)
-    Logger.debug project
+    #That's a hell of way to return a value! Damn!
+    Claimant.new(hash['Name (First)'], hash['Name (Last)'], hash['Claimant Contact Email'], wallet, project)
   end
 
 end
