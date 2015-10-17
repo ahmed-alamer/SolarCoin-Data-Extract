@@ -2,7 +2,8 @@ class Claimant
 
   attr_accessor :first_name, :last_name, :email, :wallet, :project
 
-  def initialize(first_name, last_name, email, wallet, project)
+  def initialize(id, first_name, last_name, email, wallet, project)
+    @id = id
     @first_name = first_name
     @last_name = last_name
     @email = email
@@ -10,15 +11,16 @@ class Claimant
     @project = project
   end
 
-  def to_sql_statement(id)
+  def to_sql_statement
     'INSERT INTO CLAIMANTS(id, first_name, last_name, email, wallet_id)'
         .concat('VALUES')
-        .concat("(#{id}, \"#{@first_name}\", \"#{@last_name}\", \"#{@email}\");")
+        .concat("(#{@id}, \"#{@first_name}\", \"#{@last_name}\", \"#{@email}\");")
   end
 
   #God! I should've done this using Java & Jackson!
   def to_json(*args)
     {
+        :id => @id,
         :first_name => @first_name,
         :last_name => @last_name,
         :email => @email,

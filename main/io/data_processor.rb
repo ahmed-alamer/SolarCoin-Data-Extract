@@ -44,7 +44,12 @@ class DataProcessor
     project = Project.from_file_hash(hash)
 
     #That's a hell of way to return a value! Damn!
-    Claimant.new(hash['Name (First)'], hash['Name (Last)'], hash['Claimant Contact Email'], wallet, project)
+    Claimant.new(hash['Entry Id'],
+                 hash['Name (First)'],
+                 hash['Name (Last)'],
+                 hash['Claimant Contact Email'],
+                 wallet,
+                 project)
   end
 
 end
