@@ -25,7 +25,7 @@ class DataProcessor
     end
 
     claimants.each_with_index do |claimant, index|
-      sql_statements << claimant.to_sql_statement(index)
+      sql_statements << claimant.to_sql_statement
       sql_statements << claimant.wallet.to_sql_statement(index)
       sql_statements << claimant.project.to_sql_statement(index)
     end
