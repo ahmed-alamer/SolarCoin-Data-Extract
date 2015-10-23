@@ -1,6 +1,10 @@
 class Claimant
 
-  attr_accessor :first_name, :last_name, :email, :wallet, :project
+  attr_accessor :first_name
+  attr_accessor :last_name
+  attr_accessor :email
+  attr_accessor :wallet
+  attr_accessor :project
 
   def initialize(id, first_name, last_name, email, wallet, project)
     @id = id
