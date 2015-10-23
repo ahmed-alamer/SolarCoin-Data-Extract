@@ -18,7 +18,7 @@ class DataFileHandler
     File.write("#{@directory}#{file_name}.json", result.to_json)
   end
 
-  def write_sql_statements(statements, file_name)
+  def write_sql_file(statements, file_name)
     file = File.open("#{@directory}#{file_name}.sql", 'w')
     statements.each do |statement|
       file.write(statement.concat("\n"))
