@@ -31,7 +31,7 @@ class Grant
     #I feel so bad that I crossed the 80 chars, alright!!
     columns = '(id, guid, receiver_wallet, amount, type_tag, grant_date, project)'
     wallet = "(select id from wallets where public_address = #{@receiver_wallet})"
-    values = "(DEFAULT, \"#{@guid}\", #{wallet}, #{@amount}, #{@type_tag}), #{@grant_date}, #{@project})"
+    values = "(DEFAULT, \"#{@guid}\", #{wallet}, #{@amount}, \"#{@type_tag}\"), \"#{@grant_date}\", #{@project})"
 
     'INSERT INTO' << columns << ' VALUES ' << values
   end

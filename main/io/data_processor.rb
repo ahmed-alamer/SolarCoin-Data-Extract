@@ -20,7 +20,6 @@ class DataProcessor
     json_data.each do |json_object|
       grant = Grant.from_file_hash(json_object)
 
-      Logger.debug(grant.inspect)
       grants_list << grant
     end
 

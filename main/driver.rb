@@ -10,7 +10,6 @@ end
 
 def generate_sql_file(data_processor, file_handler, claimants)
   sql_statements = data_processor.generate_claimant_sql(claimants)
-
   file_handler.write_sql_file(sql_statements, 'result')
 end
 
@@ -20,23 +19,28 @@ end
 
 DATA_DIRECTORY = '/home/ahmed/solar-coin-data/'
 
+def aggregate_grants(data_processor, file_handler)
+  grants_json = load_grants(file_handler)
+
+  data_processor.read_grants(grants_json)
+end
+
+def generate_grants_sql_file(data_processor, file_handler, grants)
+  sql_statements = data_processor.generate_grants_sql(grants)
+  file_handler.write_sql_file(sql_statements, 'grants')
+end
+
 def main
   file_handler = DataFileHandler.new(DATA_DIRECTORY)
   data_processor = DataProcessor.new
 
   Logger.debug('Processing')
 
-  data = aggregate_claimants_data(data_processor, file_handler)
+  claimants = aggregate_claimants_data(data_processor, file_handler)
+  grants = aggregate_grants(data_processor, file_handler)
 
-  generate_sql_file(data_processor, file_handler, data)
-
-  grants_json = load_grants(file_handler)
-
-  grants = data_processor.read_grants(grants_json)
-
-  sql = data_processor.generate_grants_sql(grants)
-
-  Logger.debug(sql)
+  generate_sql_file(data_processor, file_handler, claimants)
+  generate_grants_sql_file(data_processor, file_handler, grants)
 
   Logger.debug('Complete!')
 end
