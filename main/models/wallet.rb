@@ -7,8 +7,8 @@ class Wallet
   end
 
   def to_sql_statement(claimant_id)
-    columns = '(public_address, claimant_id)'
-    values = "(\"#{@public_address}\", #{claimant_id});"
+    columns = '(id, public_address, claimant_id, created_at, updated_at)'
+    values = "(DEFAULT, \"#{@public_address}\", #{claimant_id}, NOW(), NOW());"
     'INSERT INTO wallets' << columns  << ' VALUES ' << values
   end
 

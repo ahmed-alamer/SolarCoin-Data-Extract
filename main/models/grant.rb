@@ -23,17 +23,17 @@ class Grant
         grant_hash['Public Wallet Address'],
         grant_hash['Quick Claim Calc'],
         type_tag,
-        grant_hash['Next Grant Date'],
+        grant_hash['Prior Grant Date'],
         grant_hash['Generator UID'])
   end
 
   def to_sql_statement
     #I feel so bad that I crossed the 80 chars, alright!!
-    columns = '(id, guid, receiver_wallet, amount, type_tag, grant_date, project)'
-    wallet = "(select id from wallets where public_address = #{@receiver_wallet})"
-    values = "(DEFAULT, \"#{@guid}\", #{wallet}, #{@amount}, \"#{@type_tag}\"), \"#{@grant_date}\", #{@project})"
+    columns = '(id, guid, receiver_wallet, amount, type_tag, grant_date, project_id, created_at, updated_at)'
+    wallet = "(select id from wallets where public_address = \"#{@receiver_wallet}\")"
+    values = "(DEFAULT, \"#{@guid}\", #{wallet}, #{@amount}, \"#{@type_tag}\", \"#{@grant_date}\", #{@project}, NOW(), NOW())"
 
-    'INSERT INTO' << columns << ' VALUES ' << values
+    'INSERT INTO grants' << columns << ' VALUES ' << values
   end
 
 end

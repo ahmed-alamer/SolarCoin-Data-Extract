@@ -1,25 +1,26 @@
 class Claimant
 
+  attr_accessor :id
   attr_accessor :first_name
   attr_accessor :last_name
   attr_accessor :email
   attr_accessor :wallet
-  attr_accessor :project
+  attr_accessor :projects
 
-  def initialize(id, first_name, last_name, email, wallet, project)
+  def initialize(id, first_name, last_name, email, wallet, projects)
     @id = id
     @first_name = first_name
     @last_name = last_name
     @email = email
     @wallet = wallet
-    @project = project
+    @projects = projects
   end
 
   def to_sql_statement
-    columns = '(id, first_name, last_name, email, wallet_id)'
-    values = "(#{@id}, \"#{@first_name}\", \"#{@last_name}\", \"#{@email}\");"
+    columns = '(id, first_name, last_name, email, created_at, updated_at)'
+    values = "(#{@id}, \"#{@first_name}\", \"#{@last_name}\", \"#{@email}\", NOW(), NOW());"
 
-    'INSERT INTO CLAIMANTS' << columns << ' VALUES ' << values
+    'INSERT INTO claimants' << columns << ' VALUES ' << values
   end
 
   #God! I should've done this using Java & Jackson!
@@ -30,7 +31,7 @@ class Claimant
         :last_name => @last_name,
         :email => @email,
         :wallet => @wallet,
-        :project => @project
+        :projects => @projects
     }.to_json(*args)
   end
 
