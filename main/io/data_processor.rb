@@ -2,8 +2,6 @@ class DataProcessor
 
   def initialize
     @id_generator = {:project => 1, :claimant => 1}
-    @claimants_mappings = Hash.new
-    @projects_mappings = Hash.new
   end
 
   def read_claimants_and_projects(json_data)
@@ -36,16 +34,6 @@ class DataProcessor
     end
 
     grants
-  end
-
-  #deprecated
-  def transform_project_id(grant)
-    grant_original_project_id = grant.project
-    if @projects_mappings.has_key? grant_original_project_id
-      @projects_mappings[grant_original_project_id]
-    else
-      Logger.debug("Project #{grant_original_project_id} Not Found")
-    end
   end
 
   def generate_claimant_sql(claimants)
@@ -106,22 +94,6 @@ class DataProcessor
     # else
     #   original_id
     # end
-  end
-
-  #deprecated
-  def handle_project_id_mapping(project_id, original_project_id)
-    @projects_mappings[original_project_id] = project_id
-    Logger.debug("#{original_project_id} => #{project_id}")
-  end
-
-  #deprecated
-  def handle_claimant_id_mapping(claimant_id, original_claimant_id)
-    if @claimants_mappings.has_key?(original_claimant_id)
-      @claimants_mappings[original_claimant_id]
-    else
-      @claimants_mappings[original_claimant_id] = claimant_id
-      claimant_id
-    end
   end
 
   def generate_id(model)
