@@ -32,7 +32,7 @@ class Project
 
   def transform_value(field_name, value)
     if field_name == :status
-      get_approval_code(value)
+      Project.parse_approval_code(value) #WTF Ruby?
     elsif field_name == :documentation
       value == 0 ? 'N/A' : value
     elsif field_name == :install_date
@@ -44,8 +44,7 @@ class Project
     end
   end
 
-
-  def get_approval_code(value)
+  def self.parse_approval_code(value)
     if value == 0 || value == 'Test'
       'P'
     else
@@ -58,7 +57,6 @@ class Project
       self.send("#{key}=", value)
     end
   end
-
 
   def to_sql_statement(claimant_id)
     columns = '('

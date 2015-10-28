@@ -1,7 +1,7 @@
 class DataProcessor
 
   def initialize
-    @id_generator = {:project => 1, :claimant => 1, :wallet => 1}
+    @id_generator = {:project => 1, :claimant => 1}
     @claimants_mappings = Hash.new
     @projects_mappings = Hash.new
   end
@@ -32,15 +32,20 @@ class DataProcessor
 
     json_data.each do |json_object|
       grant = Grant.from_file_hash(json_object)
-      grant.project = transform_project_id(grant)
       grants << grant
     end
 
     grants
   end
 
+  #deprecated
   def transform_project_id(grant)
-    @projects_mappings[grant.project]
+    grant_original_project_id = grant.project
+    if @projects_mappings.has_key? grant_original_project_id
+      @projects_mappings[grant_original_project_id]
+    else
+      Logger.debug("Project #{grant_original_project_id} Not Found")
+    end
   end
 
   def generate_claimant_sql(claimants)
@@ -74,17 +79,9 @@ class DataProcessor
       return nil
     end
 
-    claimant_id = get_id(:claimant)
-    project_id = get_id(:project)
-
-    @projects_mappings[hash['']]
-
-    original_claimant_id = hash['Claimant UID']
-    original_project_id = hash['Entry Id']
-
-    handle_project_id_mapping(original_project_id, project_id)
-
-    claimant_id = handle_claimant_id_mapping(claimant_id, original_claimant_id)
+    approval_code = Project.parse_approval_code(hash['Approval Code'])
+    claimant_id = transform_id(:claimant, hash['Claimant UID'], approval_code)
+    project_id = transform_id(:project, hash['Generator UID'], approval_code)
 
     wallet = Wallet.new(hash['SolarCoin Public Wallet Address'])
     project = Project.new(project_id, hash)
@@ -98,10 +95,26 @@ class DataProcessor
                  [project])
   end
 
-  def handle_project_id_mapping(original_project_id, project_id)
-    @projects_mappings[original_project_id] = project_id
+  def transform_id(model, original_id, approval_status)
+    if approval_status.start_with? 'R'
+      generate_id(model)
+    else
+      original_id
+    end
+    # if original_id == 0 || original_id == nil
+    #   generate_id(model)
+    # else
+    #   original_id
+    # end
   end
 
+  #deprecated
+  def handle_project_id_mapping(project_id, original_project_id)
+    @projects_mappings[original_project_id] = project_id
+    Logger.debug("#{original_project_id} => #{project_id}")
+  end
+
+  #deprecated
   def handle_claimant_id_mapping(claimant_id, original_claimant_id)
     if @claimants_mappings.has_key?(original_claimant_id)
       @claimants_mappings[original_claimant_id]
@@ -111,7 +124,7 @@ class DataProcessor
     end
   end
 
-  def get_id(model)
+  def generate_id(model)
     id = @id_generator[model]
     @id_generator[model] = id + 1
 
