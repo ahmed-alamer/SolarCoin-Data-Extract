@@ -2,6 +2,7 @@ class DataProcessor
 
   def initialize
     @id_generator = {:project => 1, :claimant => 1}
+    @wallets = Set.new
   end
 
   def read_claimants_and_projects(json_data)
@@ -71,7 +72,8 @@ class DataProcessor
     claimant_id = transform_id(:claimant, hash['Claimant UID'], approval_code)
     project_id = transform_id(:project, hash['Generator UID'], approval_code)
 
-    wallet = Wallet.new(hash['SolarCoin Public Wallet Address'])
+    # we don't care if it's nil because the whole object will be ignored anyway
+    wallet = get_wallet(hash['SolarCoin Public Wallet Address'])
     project = Project.new(project_id, hash)
 
     #That's a hell of way to return a value! Damn!
@@ -89,11 +91,17 @@ class DataProcessor
     else
       original_id
     end
-    # if original_id == 0 || original_id == nil
-    #   generate_id(model)
-    # else
-    #   original_id
-    # end
+  end
+
+  def get_wallet(wallet_address)
+    if @wallets.include? wallet_address
+      nil
+    else
+      wallet = Wallet.new(wallet_address)
+      @wallets.add wallet
+
+      wallet
+    end
   end
 
   def generate_id(model)
