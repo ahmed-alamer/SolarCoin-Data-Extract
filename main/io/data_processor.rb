@@ -80,8 +80,7 @@ class DataProcessor
     claimant_id = transform_id(:claimant, hash['Claimant UID'], approval_code)
     project_id = transform_id(:project, hash['Generator UID'], approval_code)
 
-    # we don't care if it's nil because the whole object will be ignored anyway
-    wallet = get_wallet(hash['SolarCoin Public Wallet Address'])
+    wallet = Wallet.new(hash['SolarCoin Public Wallet Address'])
     project = Project.new(project_id, hash)
 
     #That's a hell of way to return a value! Damn!
@@ -98,17 +97,6 @@ class DataProcessor
       generate_id(model)
     else
       original_id
-    end
-  end
-
-  def get_wallet(wallet_address)
-    if @wallets.include? wallet_address
-      nil
-    else
-      wallet = Wallet.new(wallet_address)
-      @wallets.add wallet
-
-      wallet
     end
   end
 
