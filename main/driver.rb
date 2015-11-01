@@ -4,7 +4,7 @@ def aggregate_claimants_data(data_processor, file_handler)
   json_data = file_handler.load_data_from_files
   data = data_processor.read_claimants_and_projects(json_data)
   file_handler.write_json_file(data, 'result')
-
+  file_handler.write_json_file(json_data, 'aggregate')
   data
 end
 

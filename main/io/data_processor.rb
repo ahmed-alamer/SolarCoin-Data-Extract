@@ -2,6 +2,7 @@ class DataProcessor
 
   def initialize
     @id_generator = {:project => 1, :claimant => 1}
+    @claimants_ids = Set.new
     @wallets = Set.new
   end
 
@@ -15,11 +16,11 @@ class DataProcessor
         next
       end
 
-      claimant_id = claimant.id
-      if claimants.has_key?(claimant_id)
-        claimants[claimant_id].projects.push(*claimant.projects)
+      claimant_email = claimant.email
+      if claimants.has_key?(claimant_email)
+        claimants[claimant_email].projects.push(*claimant.projects)
       else
-        claimants[claimant_id] = claimant
+        claimants[claimant_email] = claimant
       end
     end
 
@@ -41,6 +42,13 @@ class DataProcessor
     sql_statements = Array.new
 
     claimants.each_with_index do |claimant|
+
+      if @claimants_ids.include? claimant.id
+        claimant.id = generate_id(:claimant)
+        @claimants_ids.add(claimant.id)
+      end
+      @claimants_ids.add(claimant.id)
+
       sql_statements << claimant.to_sql_statement
       sql_statements << claimant.wallet.to_sql_statement(claimant.id)
       claimant.projects.each do |project|
@@ -86,7 +94,7 @@ class DataProcessor
   end
 
   def transform_id(model, original_id, approval_status)
-    if approval_status.start_with? 'R'
+    if approval_status.start_with?('R') || original_id == 0
       generate_id(model)
     else
       original_id
