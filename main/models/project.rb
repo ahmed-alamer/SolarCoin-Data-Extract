@@ -1,21 +1,54 @@
 class Project
 
   attr_accessor :id
-  attr_accessor :street_address
-  attr_accessor :street_address_ext
+  attr_accessor :address
   attr_accessor :city
   attr_accessor :state
-  attr_accessor :zip_code
+  attr_accessor :post_code
   attr_accessor :country
   attr_accessor :nameplate
   attr_accessor :install_date
   attr_accessor :documentation
   attr_accessor :status
-  attr_accessor :dummy
 
-  def initialize(project_hash)
+  def initialize(id, project_hash)
     project_hash.each do |key, value|
-      self.send("#{get_field_name(key)}=", value)
+      field_name = get_field_name(key)
+      if field_name != :unknown
+        value = transform_value(field_name, value)
+        self.send("#{field_name}=", value)
+      end
+    end
+
+    self.id = id
+
+    address = project_hash['Generator Facility Location (Street Address)']
+    address_ext = project_hash['Generator Facility Location (Address Line 2)']
+    self.address = "#{address}"
+    if address_ext.class != Fixnum
+      self.address << " - #{address_ext}"
+    end
+  end
+
+  def transform_value(field_name, value)
+    if field_name == :status
+      Project.parse_approval_code(value) #WTF Ruby?
+    elsif field_name == :documentation
+      value == 0 ? 'N/A' : value
+    elsif field_name == :install_date
+      #MySQL Compliant format
+      date_string = value.split('/')
+      Date.parse("#{date_string[2]}-#{date_string[0]}-#{date_string[1]}").to_s
+    else
+      value #no transformation
+    end
+  end
+
+  def self.parse_approval_code(value)
+    if value == 0 || value == 'Test'
+      'P'
+    else
+      value.split('-').first.strip
     end
   end
 
@@ -25,41 +58,39 @@ class Project
     end
   end
 
-
   def to_sql_statement(claimant_id)
     columns = '('
     self.instance_variables.each do |member|
       columns << extract_member_accessor(member) << ', '
     end
-    columns << 'claimant_id)'
+    columns << 'claimant_id, created_at, updated_at)'
 
     values = '('
     self.instance_variables.each do |member|
       member_value = self.instance_variable_get(member)
-      if member_value.class != Fixnum
+      if member_value.class == String
         values << "\"#{member_value}\"" << ', '
       else
         values << "#{member_value}" << ', '
       end
     end
-    values << "#{claimant_id});"
+    values << "#{claimant_id}, NOW(), NOW());"
 
     'INSERT INTO projects' << columns << ' VALUES ' << values
   end
 
   def to_json(*args)
     {
-        :id => @id,
-        :street_address => @street_address,
-        :street_address_ext => @street_address_ext,
-        :city => @city,
-        :state => @state,
-        :zip_code => @zip_code,
-        :country => @country,
-        :nameplate => @nameplate,
-        :install_date => @install_date,
-        :documentation => @documentation,
-        :status => @status
+        :id => self.id,
+        :address => self.address,
+        :city => self.city,
+        :state => self.state,
+        :post_code => self.post_code,
+        :country => self.country,
+        :nameplate => self.nameplate,
+        :install_date => self.install_date,
+        :documentation => self.documentation,
+        :status => self.status
     }.to_json(*args)
   end
 
@@ -70,18 +101,12 @@ class Project
 
   def get_field_name(json_name)
     case json_name
-      when 'Entry Id'
-        :id
-      when 'Generator Facility Location (Street Address)'
-        :street_address
-      when 'Generator Facility Location (Address Line 2)'
-        :street_address_ext
       when 'Generator Facility Location (City)'
         :city
       when 'Generator Facility Location (State / Province)'
         :state
       when 'Generator Facility Location (ZIP / Postal Code)'
-        :zip_code
+        :post_code
       when 'Generator Facility Location (Country)'
         :country
       when 'Generator Nameplate Capacity (KW - DC Rating)'
@@ -93,7 +118,7 @@ class Project
       when 'Approval Code'
         :status
       else
-        :dummy
+        :unknown
     end
   end
 

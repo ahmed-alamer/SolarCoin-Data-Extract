@@ -4,7 +4,7 @@ def aggregate_claimants_data(data_processor, file_handler)
   json_data = file_handler.load_data_from_files
   data = data_processor.read_claimants_and_projects(json_data)
   file_handler.write_json_file(data, 'result')
-
+  file_handler.write_json_file(json_data, 'aggregate')
   data
 end
 
@@ -17,8 +17,6 @@ def load_grants(file_handler)
   file_handler.read_json_file('grants')
 end
 
-DATA_DIRECTORY = '/home/ahmed/solar-coin-data/'
-
 def aggregate_grants(data_processor, file_handler)
   grants_json = load_grants(file_handler)
 
@@ -30,11 +28,13 @@ def generate_grants_sql_file(data_processor, file_handler, grants)
   file_handler.write_sql_file(sql_statements, 'grants')
 end
 
+DATA_DIRECTORY = '/home/ahmed/solar-coin-data/'
+
 def main
   file_handler = DataFileHandler.new(DATA_DIRECTORY)
   data_processor = DataProcessor.new
 
-  Logger.debug('Processing')
+  Logger.debug('Processing...')
 
   claimants = aggregate_claimants_data(data_processor, file_handler)
   grants = aggregate_grants(data_processor, file_handler)

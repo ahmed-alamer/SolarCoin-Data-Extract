@@ -29,7 +29,7 @@ class DataFileHandler
   def load_data_from_files
     result_set = Array.new
 
-    (1..15).each do |file_number|
+    (2..19).each do |file_number|
       Logger.debug("Parsing File - #{file_number}")
 
       hash_list = self.read_json_data_file(file_number)
