@@ -6,10 +6,6 @@ class DataFileHandler
     @directory = data_directory
   end
 
-  def read_json_data_file(file_number)
-    read_json_file("p#{file_number}")
-  end
-
   def read_json_file(file_name)
     JSON.parse(read_file("#{file_name}.json"))
   end
@@ -26,20 +22,20 @@ class DataFileHandler
     file.close
   end
 
-  def load_data_from_files
-    result_set = Array.new
+  def load_claims_data
+    result_list = Array.new
 
-    (2..19).each do |file_number|
-      Logger.debug("Parsing File - #{file_number}")
-
-      hash_list = self.read_json_data_file(file_number)
-
-      hash_list.each do |hash|
-        result_set << hash
-      end
+    Dir.glob(CLAIMS_DIRECTORY) do |claim_file|
+      Logger.debug("Parsing File - #{claim_file}")
+      hash_list = read_json_file(claim_file)
+      result_list.push(*hash_list)
     end
 
-    result_set
+    result_list
+  end
+
+  def load_approved_claims
+    read_json_file("#{INPUT_DIRECTORY}/approved.json")
   end
 
   private

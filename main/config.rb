@@ -1,5 +1,3 @@
-#hell yeah! I am a Java guy!
-
 #global
 require 'json' #Rails JSON library, so make sure, you've got it installed in your system
 require 'date' #WTF Ruby?
@@ -13,3 +11,10 @@ require '../main/models/claimant'
 require '../main/models/project'
 require '../main/models/wallet'
 require '../main/models/grant'
+
+DATA_DIRECTORY = '/home/ahmed/solar-coin-data'
+
+INPUT_DIRECTORY = "#{DATA_DIRECTORY}/input"
+CLAIMS_DIRECTORY = "#{INPUT_DIRECTORY}/claims/*.json"
+
+OUTPUT_DIRECTORY = "#{DATA_DIRECTORY}/output"

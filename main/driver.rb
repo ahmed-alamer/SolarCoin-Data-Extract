@@ -1,7 +1,7 @@
-require '../main/pom'
+require '../main/config'
 
 def aggregate_claimants_data(data_processor, file_handler)
-  json_data = file_handler.load_data_from_files
+  json_data = file_handler.load_claims_data
   data = data_processor.read_claimants_and_projects(json_data)
   file_handler.write_json_file(data, 'result')
   file_handler.write_json_file(json_data, 'aggregate')
@@ -28,10 +28,8 @@ def generate_grants_sql_file(data_processor, file_handler, grants)
   file_handler.write_sql_file(sql_statements, 'grants')
 end
 
-DATA_DIRECTORY = '/home/ahmed/solar-coin-data/'
-
 def main
-  file_handler = DataFileHandler.new(DATA_DIRECTORY)
+  file_handler = DataFileHandler.new(INPUT_DIRECTORY)
   data_processor = DataProcessor.new
 
   Logger.debug('Processing...')

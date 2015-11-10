@@ -12,9 +12,7 @@ class DataProcessor
     json_data.each do |json_object|
       claimant = process_hash(json_object)
 
-      if claimant == nil
-        next
-      end
+      next if claimant == nil
 
       claimant_email = claimant.email
       if claimants.has_key?(claimant_email)
