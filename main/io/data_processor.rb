@@ -2,19 +2,16 @@ class DataProcessor
 
   def initialize
     @id_generator = {:project => 1, :claimant => 1}
-    @claimants_ids = Set.new
     @wallets = Set.new
   end
 
-  def read_claimants_and_projects(json_data)
+  def process_claims(claims)
     claimants = Hash.new
 
-    json_data.each do |json_object|
+    claims.each do |json_object|
       claimant = process_hash(json_object)
 
-      if claimant == nil
-        next
-      end
+      next if claimant == nil
 
       claimant_email = claimant.email
       if claimants.has_key?(claimant_email)
@@ -41,14 +38,7 @@ class DataProcessor
   def generate_claimant_sql(claimants)
     sql_statements = Array.new
 
-    claimants.each_with_index do |claimant|
-
-      if @claimants_ids.include? claimant.id
-        claimant.id = generate_id(:claimant)
-        @claimants_ids.add(claimant.id)
-      end
-      @claimants_ids.add(claimant.id)
-
+    claimants.each do |claimant|
       sql_statements << claimant.to_sql_statement
       sql_statements << claimant.wallet.to_sql_statement(claimant.id)
       claimant.projects.each do |project|
@@ -71,17 +61,13 @@ class DataProcessor
 
   private
   def process_hash(hash)
-    #if it was an empty excel row in the past! Yuck!
-    if hash['Name (First)'] == 0
+    if hash['Name (First)'] == 0 || hash['Approval Code'] == 'R'
       return nil
     end
-
-    approval_code = Project.parse_approval_code(hash['Approval Code'])
-    claimant_id = transform_id(:claimant, hash['Claimant UID'], approval_code)
-    project_id = transform_id(:project, hash['Generator UID'], approval_code)
+    claimant_id = generate_id(:claimant)
 
     wallet = Wallet.new(hash['SolarCoin Public Wallet Address'])
-    project = Project.new(project_id, hash)
+    project = Project.new(hash)
 
     #That's a hell of way to return a value! Damn!
     Claimant.new(claimant_id,
@@ -92,19 +78,8 @@ class DataProcessor
                  [project])
   end
 
-  def transform_id(model, original_id, approval_status)
-    if approval_status.start_with?('R') || original_id == 0
-      generate_id(model)
-    else
-      original_id
-    end
-  end
-
   def generate_id(model)
-    id = @id_generator[model]
-    @id_generator[model] = id + 1
-
-    id
+    @id_generator[model] += 1
   end
 
 end
