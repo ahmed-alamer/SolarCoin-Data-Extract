@@ -12,7 +12,7 @@ class DataFileHandler
   end
 
   def write_json_file(result, file_name)
-    File.write("#{@output_directory}#{file_name}.json", result.to_json)
+    File.write("#{@output_directory}/#{file_name}.json", result.to_json)
   end
 
   def write_sql_file(statements, file_name)
@@ -26,9 +26,9 @@ class DataFileHandler
   def read_directory_files(filter)
     result_list = Array.new
 
-    Dir.glob(filter).map do |file_name|
+    Dir.glob(filter) do |file_name|
       Logger.debug("Parsing File - #{file_name}")
-      hash = read_json_file(file_name)
+      hash = File.read(file_name)
       result_list.push(*hash)
     end
 

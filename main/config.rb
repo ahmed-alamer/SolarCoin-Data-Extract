@@ -1,5 +1,5 @@
 #global
-require 'json' #Rails JSON library, so make sure, you've got it installed in your system
+require 'json' #Rails JSON library
 require 'date' #WTF Ruby?
 require 'set' #WTF Ruy? Again!
 
