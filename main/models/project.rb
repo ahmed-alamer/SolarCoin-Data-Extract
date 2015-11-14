@@ -11,7 +11,7 @@ class Project
   attr_accessor :documentation
   attr_accessor :status
 
-  def initialize(id, project_hash)
+  def initialize(project_hash)
     project_hash.each do |key, value|
       field_name = get_field_name(key)
       if field_name != :unknown
@@ -101,6 +101,8 @@ class Project
 
   def get_field_name(json_name)
     case json_name
+      when 'Entry Id'
+        :id
       when 'Generator Facility Location (City)'
         :city
       when 'Generator Facility Location (State / Province)'

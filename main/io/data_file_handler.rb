@@ -2,8 +2,9 @@ require 'json'
 
 class DataFileHandler
 
-  def initialize(data_directory)
-    @directory = data_directory
+  def initialize(input_directory, output_directory)
+    @input_directory = input_directory
+    @output_directory = output_directory
   end
 
   def read_json_file(file_name)
@@ -11,36 +12,32 @@ class DataFileHandler
   end
 
   def write_json_file(result, file_name)
-    File.write("#{@directory}#{file_name}.json", result.to_json)
+    File.write("#{@output_directory}#{file_name}.json", result.to_json)
   end
 
   def write_sql_file(statements, file_name)
-    file = File.open("#{@directory}#{file_name}.sql", 'w')
+    file = File.open("#{@output_directory}#{file_name}.sql", 'w')
     statements.each do |statement|
       file.write(statement.concat("\n"))
     end
     file.close
   end
 
-  def load_claims_data
+  def read_directory_files(filter)
     result_list = Array.new
 
-    Dir.glob(CLAIMS_DIRECTORY) do |claim_file|
-      Logger.debug("Parsing File - #{claim_file}")
-      hash_list = read_json_file(claim_file)
-      result_list.push(*hash_list)
+    Dir.glob(filter).map do |file_name|
+      Logger.debug("Parsing File - #{file_name}")
+      hash = read_json_file(file_name)
+      result_list.push(*hash)
     end
 
     result_list
   end
 
-  def load_approved_claims
-    read_json_file("#{INPUT_DIRECTORY}/approved.json")
-  end
-
   private
   def read_file(file_name)
-    File.read(@directory + file_name)
+    File.read("#{@input_directory}/#{file_name}")
   end
 
 end

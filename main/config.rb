@@ -15,6 +15,6 @@ require '../main/models/grant'
 DATA_DIRECTORY = '/home/ahmed/solar-coin-data'
 
 INPUT_DIRECTORY = "#{DATA_DIRECTORY}/input"
-CLAIMS_DIRECTORY = "#{INPUT_DIRECTORY}/claims/*.json"
+CLAIMS_DIRECTORY_REGEX = "#{INPUT_DIRECTORY}/claims/*.json"
 
 OUTPUT_DIRECTORY = "#{DATA_DIRECTORY}/output"
