@@ -13,6 +13,7 @@ class DataProcessor
 
       next if claimant == nil
 
+      Logger.debug("Processing #{json_object['Entry Id']}")
       claimant_email = claimant.email
       if claimants.has_key?(claimant_email)
         claimants[claimant_email].projects.push(*claimant.projects)
@@ -48,7 +49,9 @@ class DataProcessor
 
   private
   def process_hash(hash)
-    return nil if  hash['Name (First)'] == 0 || hash['Approval'] == 'R'
+    if  hash['Name (First)'] == 0 || hash['Approval'].include?('R')
+      return nil
+    end
 
     # generate ids
     claimant_id = generate_id(:claimant)

@@ -112,9 +112,11 @@ class Project
         :nameplate
       when 'Facility Interconnection Date'
         :install_date
+      when 'Utility Interconnection Date'
+        :install_date
       when 'File Upload'
         :documentation
-      when 'Approval Code'
+      when 'Approval'
         :status
       else
         :unknown
