@@ -27,7 +27,7 @@ class Grant
         grant_hash['Generator UID'])
   end
 
-  def to_sql_statement
+  def to_sql
     #I feel so bad that I crossed the 80 chars, alright!!
     columns = '(id, guid, receiver_wallet, amount, type_tag, grant_date, project_id, created_at, updated_at)'
     wallet = "(select id from wallets where public_address = \"#{@receiver_wallet}\")"

@@ -35,39 +35,28 @@ class DataProcessor
     grants
   end
 
-  def generate_claimant_sql(claimants)
-    sql_statements = Array.new
-
-    claimants.each do |claimant|
-      sql_statements << claimant.to_sql_statement
-      sql_statements << claimant.wallet.to_sql_statement(claimant.id)
-      claimant.projects.each do |project|
-        sql_statements << project.to_sql_statement(claimant.id)
-      end
+  def generate_claimants_sql(claimants)
+    claimants.map do |claimant|
+      projects_sql = claimant.projects.map{ |p| p.to_sql(claimant.id) }
+      claimant.to_sql + "\n" + projects_sql.join("\n")
     end
-
-    sql_statements
   end
 
   def generate_grants_sql(grants)
-    sql_statements = Array.new
-
-    grants.each do |grant|
-      sql_statements << grant.to_sql_statement
-    end
-
-    sql_statements
+    grants.map { |grant| grant.to_sql }
   end
 
   private
   def process_hash(hash)
-    if hash['Name (First)'] == 0 || hash['Approval Code'] == 'R'
-      return nil
-    end
-    claimant_id = generate_id(:claimant)
+    return nil if  hash['Name (First)'] == 0 || hash['Approval'] == 'R'
 
+    # generate ids
+    claimant_id = generate_id(:claimant)
+    project_id = generate_id(:project)
+
+    # instantiate objects
     wallet = Wallet.new(hash['SolarCoin Public Wallet Address'])
-    project = Project.new(hash)
+    project = Project.new(project_id, hash)
 
     #That's a hell of way to return a value! Damn!
     Claimant.new(claimant_id,

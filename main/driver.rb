@@ -7,10 +7,19 @@ class Application
     @data_processor = data_processor
   end
 
-  def execute
+  def transform_claims
     claims = @file_handler.read_json_file('full_set')
-    claimants = @data_processor.process_claims(claims)
-    @file_handler.write_json_file(claimants, 'result')
+    @data_processor.process_claims(claims)
+  end
+
+  def execute
+    @claimants = transform_claims
+    @sql_statements = @data_processor.generate_claimants_sql(@claimants)
+  end
+
+  def shutdown
+    @file_handler.write_json_file(@claimants, 'result')
+    @file_handler.write_sql_file(@sql_statements, 'claimants')
   end
 
 end
@@ -24,4 +33,6 @@ begin
   Logger.debug('Processing...')
   application.execute
   Logger.debug('Complete!')
+ensure
+  application.shutdown
 end

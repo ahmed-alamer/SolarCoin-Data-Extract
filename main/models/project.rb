@@ -11,13 +11,11 @@ class Project
   attr_accessor :documentation
   attr_accessor :status
 
-  def initialize(project_hash)
+  def initialize(id, project_hash)
     project_hash.each do |key, value|
       field_name = get_field_name(key)
-      if field_name != :unknown
-        value = transform_value(field_name, value)
-        self.send("#{field_name}=", value)
-      end
+      next if field_name == :unknown # obviously, we don't give a damn!
+      self.send("#{field_name}=", transform_value(field_name, value))
     end
 
     self.id = id
@@ -58,7 +56,7 @@ class Project
     end
   end
 
-  def to_sql_statement(claimant_id)
+  def to_sql(claimant_id)
     columns = '('
     self.instance_variables.each do |member|
       columns << extract_member_accessor(member) << ', '
@@ -76,7 +74,7 @@ class Project
     end
     values << "#{claimant_id}, NOW(), NOW());"
 
-    'INSERT INTO projects' << columns << ' VALUES ' << values
+    "INSERT INTO projects #{columns} VALUES #{values}"
   end
 
   def to_json(*args)
@@ -95,14 +93,13 @@ class Project
   end
 
   private
+
   def extract_member_accessor(member)
     "#{member}".sub('@', '')
   end
 
-  def get_field_name(json_name)
-    case json_name
-      when 'Entry Id'
-        :id
+  def get_field_name(json_key)
+    case json_key
       when 'Generator Facility Location (City)'
         :city
       when 'Generator Facility Location (State / Province)'

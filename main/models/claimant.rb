@@ -16,7 +16,7 @@ class Claimant
     @projects = projects
   end
 
-  def to_sql_statement
+  def to_sql
     columns = '(id, first_name, last_name, email, created_at, updated_at)'
     values = "(#{@id}, \"#{@first_name}\", \"#{@last_name}\", \"#{@email}\", NOW(), NOW());"
 
