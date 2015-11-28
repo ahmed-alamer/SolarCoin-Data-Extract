@@ -10,6 +10,7 @@ class Project
   attr_accessor :install_date
   attr_accessor :documentation
   attr_accessor :status
+  attr_accessor :created_at
 
   def initialize(id, project_hash)
     project_hash.each do |key, value|
@@ -37,6 +38,8 @@ class Project
       #MySQL Compliant format
       date_string = value.split('/')
       Date.parse("#{date_string[2]}-#{date_string[0]}-#{date_string[1]}").to_s
+    elsif field_name == :created_at
+      DateTime.strptime(value, '%m/%d/%y %H:%M')
     else
       value #no transformation
     end
@@ -61,18 +64,18 @@ class Project
     self.instance_variables.each do |member|
       columns << extract_member_accessor(member) << ', '
     end
-    columns << 'claimant_id, created_at, updated_at)'
+    columns << 'claimant_id, updated_at)'
 
     values = '('
     self.instance_variables.each do |member|
       member_value = self.instance_variable_get(member)
-      if member_value.class == String
+      if member_value.class == String || member_value.class == DateTime
         values << "\"#{member_value}\"" << ', '
       else
         values << "#{member_value}" << ', '
       end
     end
-    values << "#{claimant_id}, NOW(), NOW());"
+    values << "#{claimant_id}, NOW());"
 
     "INSERT INTO projects #{columns} VALUES #{values}"
   end
@@ -88,6 +91,7 @@ class Project
         :nameplate => self.nameplate,
         :install_date => self.install_date,
         :documentation => self.documentation,
+        :created_at => self.created_at,
         :status => self.status
     }.to_json(*args)
   end
@@ -118,6 +122,8 @@ class Project
         :documentation
       when 'Approval'
         :status
+      when 'Entry Date'
+        :created_at
       else
         :unknown
     end
