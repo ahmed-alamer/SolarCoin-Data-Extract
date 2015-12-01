@@ -54,16 +54,12 @@ class DataProcessor
 
   def generate_claimants_sql(claimants)
     claimants.map do |claimant|
-      projects_sql = claimant.projects.map { |p| p.to_sql(claimant.id) }
+      projects_sql = claimant.projects.map { |project| project.to_sql(claimant.id) }
       claimant.to_sql + "\n" +
           projects_sql.join("\n") + "\n"+
           claimant.wallet.to_sql(claimant.id) + "\n"
     end
   end
-
-  # def generate_grants_sql(aggregated_grants)
-  #   aggregated_grants.values.flatten.map { |grant| grant.to_sql }
-  # end
 
   def generate_grants_sql(claims)
     grants = claims.map { |claimant| generate_claimant_grants(claimant) }
@@ -80,13 +76,7 @@ class DataProcessor
 
       Logger.debug("#{project.id}: #{project.id}(#{grant_date} => #{amount}")
 
-      Grant.new(claimant.email,
-                'GUID',
-                claimant.wallet,
-                amount,
-                'AGRT',
-                grant_date,
-                project.id)
+      Grant.new(claimant.email, 'GUID', claimant.wallet, amount, 'AGRT', grant_date, project.id)
     end
   end
 

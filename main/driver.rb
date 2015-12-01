@@ -24,9 +24,9 @@ class Application
 
   def execute
     claims = transform_claims
-    # @file_handler.write_json_file(claims, 'claimants')
+    @file_handler.write_json_file(claims, 'claimants')
 
-    # write_claims_sql(claims)
+    write_claims_sql(claims)
     write_grants_sql(claims)
   end
 
