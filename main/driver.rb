@@ -7,10 +7,27 @@ class Application
     @data_processor = data_processor
   end
 
+  def transform_claims
+    claims = @file_handler.read_json_file('full_set_2')
+    @data_processor.process_claims(claims)
+  end
+
+  def write_claims_sql(claims)
+    claims_sql = @data_processor.generate_claimants_sql(claims)
+    @file_handler.write_sql_file(claims_sql, 'claimants')
+  end
+
+  def write_grants_sql(claims)
+    grants_sql = @data_processor.generate_grants_sql(claims)
+    @file_handler.write_sql_file(grants_sql, 'grants')
+  end
+
   def execute
-    claims = @file_handler.read_json_file('full_set')
-    claimants = @data_processor.process_claims(claims)
-    @file_handler.write_json_file(claimants, 'result')
+    claims = transform_claims
+    @file_handler.write_json_file(claims, 'claimants')
+
+    write_claims_sql(claims)
+    write_grants_sql(claims)
   end
 
 end

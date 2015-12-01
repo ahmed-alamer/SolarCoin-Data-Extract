@@ -16,9 +16,9 @@ class DataFileHandler
   end
 
   def write_sql_file(statements, file_name)
-    file = File.open("#{@output_directory}#{file_name}.sql", 'w')
+    file = File.open("#{@output_directory}/#{file_name}.sql", 'w')
     statements.each do |statement|
-      file.write(statement.concat("\n"))
+      file.write("#{statement}\n")
     end
     file.close
   end

@@ -10,14 +10,13 @@ class Project
   attr_accessor :install_date
   attr_accessor :documentation
   attr_accessor :status
+  attr_accessor :created_at
 
-  def initialize(project_hash)
+  def initialize(id, project_hash)
     project_hash.each do |key, value|
       field_name = get_field_name(key)
-      if field_name != :unknown
-        value = transform_value(field_name, value)
-        self.send("#{field_name}=", value)
-      end
+      next if field_name == :unknown # obviously, we don't give a damn!
+      self.send("#{field_name}=", transform_value(field_name, value))
     end
 
     self.id = id
@@ -39,6 +38,8 @@ class Project
       #MySQL Compliant format
       date_string = value.split('/')
       Date.parse("#{date_string[2]}-#{date_string[0]}-#{date_string[1]}").to_s
+    elsif field_name == :created_at
+      DateTime.strptime(value, '%m/%d/%y %H:%M')
     else
       value #no transformation
     end
@@ -58,25 +59,25 @@ class Project
     end
   end
 
-  def to_sql_statement(claimant_id)
+  def to_sql(claimant_id)
     columns = '('
     self.instance_variables.each do |member|
       columns << extract_member_accessor(member) << ', '
     end
-    columns << 'claimant_id, created_at, updated_at)'
+    columns << 'claimant_id, updated_at)'
 
     values = '('
     self.instance_variables.each do |member|
       member_value = self.instance_variable_get(member)
-      if member_value.class == String
+      if member_value.class == String || member_value.class == DateTime
         values << "\"#{member_value}\"" << ', '
       else
         values << "#{member_value}" << ', '
       end
     end
-    values << "#{claimant_id}, NOW(), NOW());"
+    values << "#{claimant_id}, NOW());"
 
-    'INSERT INTO projects' << columns << ' VALUES ' << values
+    "INSERT INTO projects #{columns} VALUES #{values}"
   end
 
   def to_json(*args)
@@ -90,19 +91,19 @@ class Project
         :nameplate => self.nameplate,
         :install_date => self.install_date,
         :documentation => self.documentation,
+        :created_at => self.created_at,
         :status => self.status
     }.to_json(*args)
   end
 
   private
+
   def extract_member_accessor(member)
     "#{member}".sub('@', '')
   end
 
-  def get_field_name(json_name)
-    case json_name
-      when 'Entry Id'
-        :id
+  def get_field_name(json_key)
+    case json_key
       when 'Generator Facility Location (City)'
         :city
       when 'Generator Facility Location (State / Province)'
@@ -115,10 +116,14 @@ class Project
         :nameplate
       when 'Facility Interconnection Date'
         :install_date
+      when 'Utility Interconnection Date'
+        :install_date
       when 'File Upload'
         :documentation
-      when 'Approval Code'
+      when 'Approval'
         :status
+      when 'Entry Date'
+        :created_at
       else
         :unknown
     end
