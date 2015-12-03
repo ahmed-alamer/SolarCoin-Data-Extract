@@ -126,24 +126,28 @@ class DataProcessor
         "#{grant_date}"
   end
 
-  def generate_adjustment_grants(claimants, grant_date)
-    grants = claimants.map do |claimant|
-      claimant.projects.map do |project|
-        type_tag = 'PGRT'
-        guid = type_tag+
-            "#{project.country}-"+
-            "#{project.post_code}-"+
-            "#{project.id}-"+
-            "#{project.nameplate}-"+
-            "#{claimant.id}-"+
-            "#{project.install_date}-"+
-            "#{grant_date}"
+  def generate_periodic_grants(claimants, start_date, end_date)
+    (start_date..end_date).each do |grant_date|
 
-        Grant.new(claimant.email, guid, claimant.wallet, amount, type_tag, grant_date, project.id)
+      grants = claimants.map do |claimant|
+        claimant.projects.map do |project|
+          six_months_anniversary = project.install_date >> 6
+          six_months_anniversary.year = grant_date.year
+
+          unless six_months_anniversary > grant_date
+            create_periodic_grant(claimant, project, grant_date)
+          end
+        end
       end
+
+      grants.flatten.map(&:to_sql)
     end
 
-    grants.flatten.map(&:to_sql)
+  end
+
+  def create_periodic_grant(claimant, project, grant_date)
+    guid = generate_grant_guid('PGRT', claimant.id, project, grant_date)
+    Grant.new(claimant.email, guid, claimant.wallet, amount, type_tag, grant_date, project.id)
   end
 
   # copy and paste from Demeter. I know! it should be a gem! Whatever!
