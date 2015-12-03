@@ -2,6 +2,7 @@
 require 'json' #Rails JSON library
 require 'date' #WTF Ruby?
 require 'set' #WTF Ruy? Again!
+require 'iso_country_codes' #Cool gem to get iso countries codes
 
 #project
 require '../main/io/data_file_handler'

@@ -75,10 +75,12 @@ class DataProcessor
 
       grant_date = adjust_date(install_date, granting_date)
       amount = calculate_grant_amount(project, grant_date)
+      guid = generate_grant_guid('AGRT', claimant.id, project, grant_date)
 
-      Logger.debug("#{project.id}: #{project.id}(#{grant_date} => #{amount}")
+      # Logger.debug("#{project.id}: #{project.id}(#{grant_date} => #{amount}")
+      Logger.debug(guid)
 
-      Grant.new(claimant.email, 'GUID', claimant.wallet, amount, 'AGRT', grant_date, project.id)
+      Grant.new(claimant.email, guid, claimant.wallet, amount, 'AGRT', grant_date, project.id)
     end
   end
 
@@ -110,6 +112,18 @@ class DataProcessor
 
   def generate_id(model)
     @id_generator[model] += 1
+  end
+
+  def generate_grant_guid(type_tag, claimant_id, project, grant_date)
+    county_code = IsoCountryCodes.search_by_name('australia').first.alpha2
+    "#{type_tag}-" +
+        "#{county_code}-" +
+        "#{project.post_code}-" +
+        "#{project.id}-" +
+        "#{project.nameplate}-" +
+        "#{claimant_id}-" +
+        "#{project.install_date}-" +
+        "#{grant_date}"
   end
 
   def generate_adjustment_grants(claimants, grant_date)
