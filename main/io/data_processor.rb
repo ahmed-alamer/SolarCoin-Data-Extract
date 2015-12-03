@@ -62,8 +62,10 @@ class DataProcessor
   end
 
   def generate_grants_sql(claims)
-    grants = claims.map { |claimant| generate_claimant_grants(claimant) }
-    grants.flatten.map { |grant| grant.to_sql }
+    # This is so cool, I don't give a damn about the performance penalty!
+    claims.map(&method(:generate_claimant_grants))
+        .flatten
+        .map(&:to_sql)
   end
 
   def generate_claimant_grants(claimant)
@@ -82,7 +84,7 @@ class DataProcessor
 
   private
   def process_hash(hash)
-    if  hash['Name (First)'] == 0 || hash['Approval'].include?('R')
+    if hash['Name (First)'] == 0 || hash['Approval'].include?('R')
       return nil
     end
 
@@ -110,6 +112,26 @@ class DataProcessor
     @id_generator[model] += 1
   end
 
+  def generate_adjustment_grants(claimants, grant_date)
+    grants = claimants.map do |claimant|
+      claimant.projects.map do |project|
+        type_tag = 'PGRT'
+        guid = type_tag+
+            "#{project.country}-"+
+            "#{project.post_code}-"+
+            "#{project.id}-"+
+            "#{project.nameplate}-"+
+            "#{claimant.id}-"+
+            "#{project.install_date}-"+
+            "#{grant_date}"
+
+        Grant.new(claimant.email, guid, claimant.wallet, amount, type_tag, grant_date, project.id)
+      end
+    end
+
+    grants.flatten.map(&:to_sql)
+  end
+
   # copy and paste from Demeter. I know! it should be a gem! Whatever!
   def adjust_date(install_date, granting_date)
     if install_date.year < 2010
@@ -120,7 +142,7 @@ class DataProcessor
                                 install_date.month,
                                 install_date.day)
 
-    six_months  = next_anniversary >> 6
+    six_months = next_anniversary >> 6
 
     if granting_date > six_months
       calc_month = Date.new(six_months.year, six_months.month, 1)
