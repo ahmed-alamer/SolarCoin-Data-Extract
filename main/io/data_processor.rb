@@ -77,11 +77,22 @@ class DataProcessor
       amount = calculate_grant_amount(project, grant_date)
       guid = generate_grant_guid('AGRT', claimant.id, project, grant_date)
 
-      # Logger.debug("#{project.id}: #{project.id}(#{grant_date} => #{amount}")
-      Logger.debug(guid)
+      Logger.debug("Generated Grant -> #{guid}")
 
       Grant.new(claimant.email, guid, claimant.wallet, amount, 'AGRT', grant_date, project.id)
     end
+  end
+
+  def generate_periodic_grants(claimants, start_date, end_date)
+    grant_date = start_date
+    grants = Array.new
+
+    while grant_date <= end_date
+      grants << generate_monthly_grants(claimants, grant_date).compact
+      grant_date = grant_date >> 1
+    end
+
+    grants.flatten
   end
 
   private
@@ -126,28 +137,25 @@ class DataProcessor
         "#{grant_date}"
   end
 
-  def generate_periodic_grants(claimants, start_date, end_date)
-    (start_date..end_date).each do |grant_date|
-
-      grants = claimants.map do |claimant|
-        claimant.projects.map do |project|
-          six_months_anniversary = project.install_date >> 6
-          six_months_anniversary.year = grant_date.year
-
-          unless six_months_anniversary > grant_date
-            create_periodic_grant(claimant, project, grant_date)
-          end
-        end
-      end
-
-      grants.flatten.map(&:to_sql)
-    end
-
-  end
-
   def create_periodic_grant(claimant, project, grant_date)
     guid = generate_grant_guid('PGRT', claimant.id, project, grant_date)
-    Grant.new(claimant.email, guid, claimant.wallet, amount, type_tag, grant_date, project.id)
+    amount = 10
+    Grant.new(claimant.email, guid, claimant.wallet, amount, 'PGRT', grant_date, project.id)
+  end
+
+  def generate_monthly_grants(claimants, grant_date)
+    claimants.flat_map do |claimant|
+      claimant.projects.map do |project|
+        install_date = Date.parse(project.install_date)
+        six_months = install_date >> 6
+        six_months = Date.new(grant_date.year, six_months.month, six_months.day)
+
+        unless six_months > grant_date
+          grant = create_periodic_grant(claimant, project, grant_date)
+          grant.to_sql
+        end
+      end
+    end
   end
 
   # copy and paste from Demeter. I know! it should be a gem! Whatever!
