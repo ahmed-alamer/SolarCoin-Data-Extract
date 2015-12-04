@@ -62,8 +62,10 @@ class DataProcessor
   end
 
   def generate_grants_sql(claims)
-    grants = claims.map { |claimant| generate_claimant_grants(claimant) }
-    grants.flatten.map { |grant| grant.to_sql }
+    # This is so cool, I don't give a damn about the performance penalty!
+    claims.map(&method(:generate_claimant_grants))
+        .flatten
+        .map(&:to_sql)
   end
 
   def generate_claimant_grants(claimant)
@@ -73,16 +75,29 @@ class DataProcessor
 
       grant_date = adjust_date(install_date, granting_date)
       amount = calculate_grant_amount(project, grant_date)
+      guid = generate_grant_guid('AGRT', claimant.id, project, grant_date)
 
-      Logger.debug("#{project.id}: #{project.id}(#{grant_date} => #{amount}")
+      Logger.debug("Generated Grant -> #{guid}")
 
-      Grant.new(claimant.email, 'GUID', claimant.wallet, amount, 'AGRT', grant_date, project.id)
+      Grant.new(claimant.email, guid, claimant.wallet, amount, 'AGRT', grant_date, project.id)
     end
+  end
+
+  def generate_periodic_grants(claimants, start_date, end_date)
+    grant_date = start_date
+    grants = Array.new
+
+    while grant_date <= end_date
+      grants << generate_monthly_grants(claimants, grant_date).compact
+      grant_date = grant_date >> 1
+    end
+
+    grants.flatten
   end
 
   private
   def process_hash(hash)
-    if  hash['Name (First)'] == 0 || hash['Approval'].include?('R')
+    if hash['Name (First)'] == 0 || hash['Approval'].include?('R')
       return nil
     end
 
@@ -110,17 +125,47 @@ class DataProcessor
     @id_generator[model] += 1
   end
 
+  def generate_grant_guid(type_tag, claimant_id, project, grant_date)
+    county_code = IsoCountryCodes.search_by_name('australia').first.alpha2
+    "#{type_tag}-" +
+        "#{county_code}-" +
+        "#{project.post_code}-" +
+        "#{project.id}-" +
+        "#{project.nameplate}-" +
+        "#{claimant_id}-" +
+        "#{project.install_date}-" +
+        "#{grant_date}"
+  end
+
+  def create_periodic_grant(claimant, project, grant_date)
+    guid = generate_grant_guid('PGRT', claimant.id, project, grant_date)
+    amount = 180 * project.nameplate * 0.15 # 6 months = 180 days
+    Grant.new(claimant.email, guid, claimant.wallet, amount, 'PGRT', grant_date, project.id)
+  end
+
+  def generate_monthly_grants(claimants, grant_date)
+    claimants.flat_map do |claimant|
+      claimant.projects.map do |project|
+        install_date = Date.parse(project.install_date)
+        six_months = install_date >> 6
+        six_months = Date.new(grant_date.year, six_months.month, six_months.day)
+
+        unless six_months > grant_date
+          grant = create_periodic_grant(claimant, project, grant_date)
+          grant.to_sql
+        end
+      end
+    end
+  end
+
   # copy and paste from Demeter. I know! it should be a gem! Whatever!
   def adjust_date(install_date, granting_date)
     if install_date.year < 2010
       install_date = Date.new(2010, 1, 1)
     end
 
-    next_anniversary = Date.new(granting_date.year,
-                                install_date.month,
-                                install_date.day)
-
-    six_months  = next_anniversary >> 6
+    next_anniversary = Date.new(granting_date.year, install_date.month, install_date.day)
+    six_months = next_anniversary >> 6
 
     if granting_date > six_months
       calc_month = Date.new(six_months.year, six_months.month, 1)

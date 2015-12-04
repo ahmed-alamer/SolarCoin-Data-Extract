@@ -30,15 +30,16 @@ class Project
   end
 
   def transform_value(field_name, value)
-    if field_name == :status
+    case field_name
+    when :status
       Project.parse_approval_code(value) #WTF Ruby?
-    elsif field_name == :documentation
+    when :documentation
       value == 0 ? 'N/A' : value
-    elsif field_name == :install_date
+    when :install_date
       #MySQL Compliant format
       date_string = value.split('/')
       Date.parse("#{date_string[2]}-#{date_string[0]}-#{date_string[1]}").to_s
-    elsif field_name == :created_at
+    when :created_at
       DateTime.strptime(value, '%m/%d/%y %H:%M')
     else
       value #no transformation

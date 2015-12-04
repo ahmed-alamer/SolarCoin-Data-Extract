@@ -24,10 +24,14 @@ class Application
 
   def execute
     claims = transform_claims
-    @file_handler.write_json_file(claims, 'claimants')
-
-    write_claims_sql(claims)
-    write_grants_sql(claims)
+    start_date = Date.parse('2014-01-01')
+    end_date = Date.parse('2014-02-01')
+    periodic_grants = @data_processor.generate_periodic_grants(claims, start_date, end_date)
+    @file_handler.write_sql_file(periodic_grants, 'periodic_grants')
+    # @file_handler.write_json_file(claims, 'claimants')
+    #
+    # write_claims_sql(claims)
+    # write_grants_sql(claims)
   end
 
 end
