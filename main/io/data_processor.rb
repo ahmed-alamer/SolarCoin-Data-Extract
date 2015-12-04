@@ -139,7 +139,7 @@ class DataProcessor
 
   def create_periodic_grant(claimant, project, grant_date)
     guid = generate_grant_guid('PGRT', claimant.id, project, grant_date)
-    amount = 180 * project.nameplate * 0.15
+    amount = 180 * project.nameplate * 0.15 # 6 months = 180 days
     Grant.new(claimant.email, guid, claimant.wallet, amount, 'PGRT', grant_date, project.id)
   end
 
