@@ -139,7 +139,7 @@ class DataProcessor
 
   def create_periodic_grant(claimant, project, grant_date)
     guid = generate_grant_guid('PGRT', claimant.id, project, grant_date)
-    amount = 10
+    amount = 180 * project.nameplate * 0.15
     Grant.new(claimant.email, guid, claimant.wallet, amount, 'PGRT', grant_date, project.id)
   end
 
@@ -164,10 +164,7 @@ class DataProcessor
       install_date = Date.new(2010, 1, 1)
     end
 
-    next_anniversary = Date.new(granting_date.year,
-                                install_date.month,
-                                install_date.day)
-
+    next_anniversary = Date.new(granting_date.year, install_date.month, install_date.day)
     six_months = next_anniversary >> 6
 
     if granting_date > six_months
