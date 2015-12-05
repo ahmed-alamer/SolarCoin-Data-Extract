@@ -4,16 +4,14 @@ class Claimant
   attr_accessor :first_name
   attr_accessor :last_name
   attr_accessor :email
-  attr_accessor :wallet
   attr_accessor :projects
 
-  def initialize(id, first_name, last_name, email, wallet, projects)
+  def initialize(id, first_name, last_name, email, projects)
     @id = id
     @first_name = first_name
     @last_name = last_name
     @email = email
-    @wallet = wallet
-    @projects = projects
+    @projects = Array(projects)
   end
 
   def to_sql
@@ -30,7 +28,6 @@ class Claimant
         :first_name => @first_name,
         :last_name => @last_name,
         :email => @email,
-        :wallet => @wallet,
         :projects => @projects
     }.to_json(*args)
   end
@@ -40,8 +37,7 @@ class Claimant
         json_hash['first_name'],
         json_hash['last_name'],
         json_hash['email'],
-        Wallet.json_create(json_hash['wallet']),
-        Project.from_json(json_hash['project']))
+        json_hash['projects'])
   end
 
 end
