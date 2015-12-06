@@ -1,28 +1,20 @@
 class Grant
 
-  attr_accessor :claimant_email
+  attr_accessor :claimant_id
   attr_accessor :guid
-  attr_accessor :receiver_wallet
+  attr_accessor :wallet
   attr_accessor :amount
   attr_accessor :type_tag
   attr_accessor :grant_date
-  attr_accessor :project
+  attr_accessor :project_id
 
-  def initialize(claimant_email,
-                 guid,
-                 receiver_wallet,
-                 amount,
-                 type_tag,
-                 grant_date,
-                 project)
-
-    @claimant_email = claimant_email
+  def initialize(guid, wallet, amount, type_tag, grant_date, project_id)
     @guid = guid
-    @receiver_wallet = receiver_wallet
+    @wallet = wallet
     @amount = amount
     @type_tag = type_tag
     @grant_date = grant_date
-    @project = project
+    @project_id = project_id
   end
 
   def self.from_file_hash(grant_hash)
@@ -42,13 +34,10 @@ class Grant
     values = Array.new
 
     self.instance_variables.each do |member|
-      accessor = extract_accessor(member)
-      if accessor == 'claimant_email'
-        columns << 'project_id'
-      elsif accessor == 'project'
-        next
+      if extract_accessor(member) == 'wallet'
+        columns << 'receiver_wallet'
       else
-        columns << accessor
+        columns << extract_accessor(member)
       end
     end
 
@@ -56,23 +45,10 @@ class Grant
 
     self.instance_variables.each do |var|
       accessor = extract_accessor(var)
-
-      next if accessor == 'project'
-
       value = self.send(accessor)
 
-      if accessor == 'claimant_email'
-        claimant_id = '(SELECT id ' +
-            'FROM claimants ' +
-            "WHERE email = '#{value}'" +
-            'LIMIT 1)'
-
-          values << '(SELECT id FROM projects ' +
-              "WHERE claimant_id = #{claimant_id} LIMIT 1)"
-      elsif accessor == 'receiver_wallet'
-        values << '(SELECT id FROM wallets ' +
-            'WHERE public_address = "' + @receiver_wallet.public_address +
-            '" LIMIT 1)'
+      if accessor == 'wallet'
+        values << "(SELECT id FROM wallets WHERE public_address = '#{@wallet.public_address}')"
       elsif value.class == Fixnum || value.class == Float
         values << value
       else

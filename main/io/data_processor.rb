@@ -1,7 +1,7 @@
 class DataProcessor
 
   def initialize
-    @id_generator = {:project => 1, :claimant => 1}
+    @id_generator = {:project_id => 1, :claimant => 1}
   end
 
   def process_claims(claims_from_file)
@@ -93,7 +93,7 @@ class DataProcessor
   def create_periodic_grant(claimant, project, grant_date)
     guid = generate_grant_guid('PGRT', claimant.id, project, grant_date)
     amount = 180 * project.nameplate * 0.15 # 6 months = 180 days
-    Grant.new(claimant.email, guid, project.wallet, amount, 'PGRT', grant_date, project.id)
+    Grant.new(guid, project.wallet, amount, 'PGRT', grant_date, project.id)
   end
 
   def generate_adjustment_grant(claimant)
@@ -107,7 +107,7 @@ class DataProcessor
 
       Logger.debug("Generated Grant -> #{guid}")
 
-      Grant.new(claimant.email, guid, project.wallet, amount, 'AGRT', grant_date, project.id)
+      Grant.new(guid, project.wallet, amount, 'AGRT', grant_date, project.id)
     end
   end
 
