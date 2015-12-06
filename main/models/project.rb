@@ -28,7 +28,7 @@ class Project
   def transform_value(field_name, value)
     case field_name
     when :status
-      Project.parse_approval_code(value) #WTF Ruby?
+      "#{Project.parse_approval_code(value)}1" #WTF Ruby?
     when :install_date
       #MySQL Compliant format
       date_string = value.split('/')
