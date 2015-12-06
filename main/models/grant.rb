@@ -5,7 +5,7 @@ class Grant
   attr_accessor :wallet
   attr_accessor :amount
   attr_accessor :type_tag
-  attr_accessor :grant_date
+  attr_accessor :created_at
   attr_accessor :project_id
 
   def initialize(guid, wallet, amount, type_tag, grant_date, project_id)
@@ -13,7 +13,7 @@ class Grant
     @wallet = wallet
     @amount = amount
     @type_tag = type_tag
-    @grant_date = grant_date
+    @created_at = grant_date
     @project_id = project_id
   end
 
@@ -41,7 +41,7 @@ class Grant
       end
     end
 
-    columns << 'created_at' << 'updated_at'
+    columns << 'updated_at'
 
     self.instance_variables.each do |var|
       accessor = extract_accessor(var)
@@ -56,7 +56,7 @@ class Grant
       end
     end
 
-    values << 'NOW()' << 'NOW()'
+    values << 'NOW()'
 
     "INSERT INTO grants(#{columns.join(',')}) VALUES(#{values.join(',')});"
   end
