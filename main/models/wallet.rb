@@ -22,4 +22,12 @@ class Wallet
     new(json_hash['public_address'])
   end
 
+  def eql?(wallet)
+    public_address == wallet.public_address
+  end
+
+  def hash
+    public_address.hash
+  end
+
 end

@@ -11,6 +11,7 @@ class Project
   attr_accessor :documentation
   attr_accessor :status
   attr_accessor :created_at
+  attr_accessor :wallet
 
   def initialize(id, project_hash)
     project_hash.each do |key, value|
@@ -18,6 +19,8 @@ class Project
       next if field_name == :unknown # obviously, we don't give a damn!
       self.send("#{field_name}=", transform_value(field_name, value))
     end
+
+    self.documentation = get_documentation_link(project_hash)
 
     self.id = id
 
@@ -33,14 +36,14 @@ class Project
     case field_name
     when :status
       Project.parse_approval_code(value) #WTF Ruby?
-    when :documentation
-      value == 0 ? 'N/A' : value
     when :install_date
       #MySQL Compliant format
       date_string = value.split('/')
       Date.parse("#{date_string[2]}-#{date_string[0]}-#{date_string[1]}").to_s
     when :created_at
       DateTime.strptime(value, '%m/%d/%y %H:%M')
+    when :wallet
+      Wallet.new(value)
     else
       value #no transformation
     end
@@ -70,6 +73,7 @@ class Project
     values = '('
     self.instance_variables.each do |member|
       member_value = self.instance_variable_get(member)
+      next if member == '@wallet'
       if member_value.class == String || member_value.class == DateTime
         values << "\"#{member_value}\"" << ', '
       else
@@ -93,7 +97,8 @@ class Project
         :install_date => self.install_date,
         :documentation => self.documentation,
         :created_at => self.created_at,
-        :status => self.status
+        :status => self.status,
+        :wallet => wallet
     }.to_json(*args)
   end
 
@@ -101,6 +106,14 @@ class Project
 
   def extract_member_accessor(member)
     "#{member}".sub('@', '')
+  end
+
+  def get_documentation_link(project_hash)
+    if project_hash['File Upload'] == 0
+      project_hash['Link']
+    else
+      project_hash['File Upload']
+    end
   end
 
   def get_field_name(json_key)
@@ -119,7 +132,11 @@ class Project
         :install_date
       when 'Utility Interconnection Date'
         :install_date
+      when 'SolarCoin Public Wallet Address'
+        :wallet
       when 'File Upload'
+        :documentation
+      when 'Link'
         :documentation
       when 'Approval'
         :status

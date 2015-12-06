@@ -2,7 +2,6 @@ class DataProcessor
 
   def initialize
     @id_generator = {:project => 1, :claimant => 1}
-    @wallets = Set.new
   end
 
   def process_claims(claims_from_file)
@@ -11,7 +10,7 @@ class DataProcessor
     claims_from_file.each do |json_object|
       Logger.debug("Processing #{json_object['Entry Id']}")
 
-      claimant = process_hash(json_object)
+      claimant = process_claim_hash(json_object)
       next if claimant == nil
 
       claimant_email = claimant.email
@@ -25,62 +24,23 @@ class DataProcessor
     claimants.values
   end
 
-  def process_grants(grants_from_file)
-    grants = Hash.new
-
-    grants_from_file.each do |grant|
-      grant = Grant.from_file_hash(grant)
-      claimant_email = grant.claimant_email
-      if grants.has_key?(claimant_email)
-        grants[claimant_email] << grant
-      else
-        grants[claimant_email] = Array(grant)
-      end
-    end
-
-    grants
-  end
-
-  def read_grants(json_data)
-    grants = Array.new
-
-    json_data.each do |json_object|
-      grant = Grant.from_file_hash(json_object)
-      grants << grant
-    end
-
-    grants
-  end
-
   def generate_claimants_sql(claimants)
     claimants.map do |claimant|
       projects_sql = claimant.projects.map { |project| project.to_sql(claimant.id) }
-      claimant.to_sql + "\n" +
-          projects_sql.join("\n") + "\n"+
-          claimant.wallet.to_sql(claimant.id) + "\n"
+
+      wallets = Set.new
+      claimant.projects.each { |project| wallets.add(project.wallet) }
+      wallets_sql = wallets.map { |wallet| wallet.to_sql(claimant.id) }
+
+      claimant.to_sql + "\n" + projects_sql.join("\n") + "\n" + wallets_sql.join("\n") + "\n"
     end
   end
 
-  def generate_grants_sql(claims)
+  def generate_adjustment_grants(claims)
     # This is so cool, I don't give a damn about the performance penalty!
-    claims.map(&method(:generate_claimant_grants))
+    claims.map(&method(:generate_adjustment_grant))
         .flatten
         .map(&:to_sql)
-  end
-
-  def generate_claimant_grants(claimant)
-    claimant.projects.map do |project|
-      granting_date = project.created_at.to_date
-      install_date = Date.parse(project.install_date)
-
-      grant_date = adjust_date(install_date, granting_date)
-      amount = calculate_grant_amount(project, grant_date)
-      guid = generate_grant_guid('AGRT', claimant.id, project, grant_date)
-
-      Logger.debug("Generated Grant -> #{guid}")
-
-      Grant.new(claimant.email, guid, claimant.wallet, amount, 'AGRT', grant_date, project.id)
-    end
   end
 
   def generate_periodic_grants(claimants, start_date, end_date)
@@ -96,8 +56,12 @@ class DataProcessor
   end
 
   private
-  def process_hash(hash)
-    if hash['Name (First)'] == 0 || hash['Approval'].include?('R')
+  def process_claim_hash(hash)
+    first_name = hash['Name (First)']
+    last_name = hash['Name (Last)']
+    email = hash['Claimant Contact Email']
+
+    if first_name == 0 || hash['Approval'].include?('R')
       return nil
     end
 
@@ -109,38 +73,7 @@ class DataProcessor
     wallet = Wallet.new(hash['SolarCoin Public Wallet Address'])
     project = Project.new(project_id, hash)
 
-    #adjust nameplate to MWs
-    # project.nameplate = project.nameplate / 1000
-
-    #That's a hell of way to return a value! Damn!
-    Claimant.new(claimant_id,
-                 hash['Name (First)'],
-                 hash['Name (Last)'],
-                 hash['Claimant Contact Email'],
-                 wallet,
-                 [project])
-  end
-
-  def generate_id(model)
-    @id_generator[model] += 1
-  end
-
-  def generate_grant_guid(type_tag, claimant_id, project, grant_date)
-    county_code = IsoCountryCodes.search_by_name('australia').first.alpha2
-    "#{type_tag}-" +
-        "#{county_code}-" +
-        "#{project.post_code}-" +
-        "#{project.id}-" +
-        "#{project.nameplate}-" +
-        "#{claimant_id}-" +
-        "#{project.install_date}-" +
-        "#{grant_date}"
-  end
-
-  def create_periodic_grant(claimant, project, grant_date)
-    guid = generate_grant_guid('PGRT', claimant.id, project, grant_date)
-    amount = 180 * project.nameplate * 0.15 # 6 months = 180 days
-    Grant.new(claimant.email, guid, claimant.wallet, amount, 'PGRT', grant_date, project.id)
+    Claimant.new(claimant_id, first_name, last_name, email, project)
   end
 
   def generate_monthly_grants(claimants, grant_date)
@@ -151,10 +84,30 @@ class DataProcessor
         six_months = Date.new(grant_date.year, six_months.month, six_months.day)
 
         unless six_months > grant_date
-          grant = create_periodic_grant(claimant, project, grant_date)
-          grant.to_sql
+          create_periodic_grant(claimant, project, grant_date).to_sql
         end
       end
+    end
+  end
+
+  def create_periodic_grant(claimant, project, grant_date)
+    guid = generate_grant_guid('PGRT', claimant.id, project, grant_date)
+    amount = 180 * project.nameplate * 0.15 # 6 months = 180 days
+    Grant.new(claimant.email, guid, project.wallet, amount, 'PGRT', grant_date, project.id)
+  end
+
+  def generate_adjustment_grant(claimant)
+    claimant.projects.map do |project|
+      granting_date = project.created_at.to_date
+      install_date = Date.parse(project.install_date)
+
+      grant_date = adjust_date(install_date, granting_date)
+      amount = calculate_grant_amount(project, grant_date)
+      guid = generate_grant_guid('AGRT', claimant.id, project, grant_date)
+
+      Logger.debug("Generated Grant -> #{guid}")
+
+      Grant.new(claimant.email, guid, project.wallet, amount, 'AGRT', grant_date, project.id)
     end
   end
 
@@ -188,5 +141,20 @@ class DataProcessor
     (24 * (project.nameplate) * day_diff.abs * 0.15) / 1000
   end
 
+  def generate_id(model)
+    @id_generator[model] += 1
+  end
+
+  def generate_grant_guid(type_tag, claimant_id, project, grant_date)
+    county_code = IsoCountryCodes.search_by_name('australia').first.alpha2
+    "#{type_tag}-" +
+        "#{county_code}-" +
+        "#{project.post_code}-" +
+        "#{project.id}-" +
+        "#{project.nameplate}-" +
+        "#{claimant_id}-" +
+        "#{project.install_date}-" +
+        "#{grant_date}"
+  end
 
 end
