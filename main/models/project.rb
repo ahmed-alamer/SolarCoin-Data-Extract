@@ -20,6 +20,8 @@ class Project
       self.send("#{field_name}=", transform_value(field_name, value))
     end
 
+    self.documentation = get_documentation_link(project_hash)
+
     self.id = id
 
     address = project_hash['Generator Facility Location (Street Address)']
@@ -34,8 +36,6 @@ class Project
     case field_name
     when :status
       Project.parse_approval_code(value) #WTF Ruby?
-    when :documentation
-      value == 0 ? 'N/A' : value
     when :install_date
       #MySQL Compliant format
       date_string = value.split('/')
@@ -108,6 +108,14 @@ class Project
     "#{member}".sub('@', '')
   end
 
+  def get_documentation_link(project_hash)
+    if project_hash['File Upload'] == 0
+      project_hash['Link']
+    else
+      project_hash['File Upload']
+    end
+  end
+
   def get_field_name(json_key)
     case json_key
       when 'Generator Facility Location (City)'
@@ -127,6 +135,8 @@ class Project
       when 'SolarCoin Public Wallet Address'
         :wallet
       when 'File Upload'
+        :documentation
+      when 'Link'
         :documentation
       when 'Approval'
         :status

@@ -7,6 +7,19 @@ class Application
     @data_processor = data_processor
   end
 
+  def execute
+    claims = transform_claims
+    start_date = Date.parse('2014-01-01')
+    end_date = Date.parse('2015-11-01')
+
+    @file_handler.write_json_file(claims, 'claimants')
+
+    write_claims_sql(claims)
+    write_grants_sql(claims)
+    write_periodic_grants_sql(claims, start_date, end_date)
+  end
+
+  private
   def transform_claims
     claims = @file_handler.read_json_file('full_set_2')
     @data_processor.process_claims(claims)
@@ -22,19 +35,9 @@ class Application
     @file_handler.write_sql_file(grants_sql, 'grants')
   end
 
-  def execute
-    claims = transform_claims
-    start_date = Date.parse('2014-01-01')
-    end_date = Date.parse('2015-11-01')
-
-    @file_handler.write_json_file(claims, 'claimants')
-
-    # periodic_grants = @data_processor.generate_periodic_grants(claims, start_date, end_date)
-    # @file_handler.write_sql_file(periodic_grants, 'periodic_grants')
-    #
-    #
-    write_claims_sql(claims)
-    write_grants_sql(claims)
+  def write_periodic_grants_sql(claims, start_date, end_date)
+    periodic_grants = @data_processor.generate_periodic_grants(claims, start_date, end_date)
+    @file_handler.write_sql_file(periodic_grants, 'periodic_grants')
   end
 
 end
