@@ -20,16 +20,9 @@ class Project
       self.send("#{field_name}=", transform_value(field_name, value))
     end
 
-    self.documentation = get_documentation_link(project_hash)
-
     self.id = id
-
-    address = project_hash['Generator Facility Location (Street Address)']
-    address_ext = project_hash['Generator Facility Location (Address Line 2)']
-    self.address = "#{address}"
-    if address_ext.class != Fixnum
-      self.address << " - #{address_ext}"
-    end
+    self.documentation = get_documentation_link(project_hash)
+    self.address = get_address(project_hash)
   end
 
   def transform_value(field_name, value)
@@ -66,6 +59,7 @@ class Project
   def to_sql(claimant_id)
     columns = '('
     self.instance_variables.each do |member|
+      next if member == :@wallet
       columns << extract_member_accessor(member) << ', '
     end
     columns << 'claimant_id, updated_at)'
@@ -73,7 +67,7 @@ class Project
     values = '('
     self.instance_variables.each do |member|
       member_value = self.instance_variable_get(member)
-      next if member == '@wallet'
+      next if member == :@wallet
       if member_value.class == String || member_value.class == DateTime
         values << "\"#{member_value}\"" << ', '
       else
@@ -103,6 +97,15 @@ class Project
   end
 
   private
+  def get_address(project_hash)
+    address = project_hash['Generator Facility Location (Street Address)']
+    address_ext = project_hash['Generator Facility Location (Address Line 2)']
+    if address_ext.class != Fixnum
+      "#{address} - #{address_ext}"
+    else
+      address
+    end
+  end
 
   def extract_member_accessor(member)
     "#{member}".sub('@', '')
