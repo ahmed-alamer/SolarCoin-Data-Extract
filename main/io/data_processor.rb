@@ -30,7 +30,7 @@ class DataProcessor
 
       wallets = Set.new
       claimant.projects.each { |project| wallets.add(project.wallet) }
-      wallets_sql = wallets.map { |wallet| wallet.to_sql(claimant.id) }
+      wallets_sql = wallets.map { |wallet| wallet.to_sql }
 
       claimant.to_sql + "\n" + projects_sql.join("\n") + "\n" + wallets_sql.join("\n") + "\n"
     end
@@ -70,7 +70,6 @@ class DataProcessor
     project_id = hash['Entry Id']
 
     # instantiate objects
-    wallet = Wallet.new(hash['SolarCoin Public Wallet Address'])
     project = Project.new(project_id, hash)
 
     Claimant.new(claimant_id, first_name, last_name, email, project)

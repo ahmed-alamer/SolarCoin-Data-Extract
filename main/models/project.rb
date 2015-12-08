@@ -14,15 +14,16 @@ class Project
   attr_accessor :wallet
 
   def initialize(id, project_hash)
+    self.id = id
+    self.documentation = get_documentation_link(project_hash)
+    self.address = get_address(project_hash)
+
     project_hash.each do |key, value|
       field_name = get_field_name(key)
       next if field_name == :unknown # obviously, we don't give a damn!
       self.send("#{field_name}=", transform_value(field_name, value))
     end
 
-    self.id = id
-    self.documentation = get_documentation_link(project_hash)
-    self.address = get_address(project_hash)
   end
 
   def transform_value(field_name, value)
@@ -36,7 +37,7 @@ class Project
     when :created_at
       DateTime.strptime(value, '%m/%d/%y %H:%M')
     when :wallet
-      Wallet.new(value)
+      Wallet.new(value, self.id)
     else
       value #no transformation
     end
@@ -74,7 +75,7 @@ class Project
         values << "#{member_value}" << ', '
       end
     end
-    values << "#{claimant_id}, NOW());"
+    values << "#{claimant_id}, '#{created_at}');"
 
     "INSERT INTO projects #{columns} VALUES #{values}"
   end
