@@ -48,7 +48,7 @@ class Grant
       value = self.send(accessor)
 
       if accessor == 'wallet'
-        values << "(SELECT id FROM wallets WHERE public_address = '#{@wallet.public_address}')"
+        values << "(SELECT id FROM wallets WHERE public_address = '#{@wallet}')"
       elsif value.class == Fixnum || value.class == Float
         values << value
       else

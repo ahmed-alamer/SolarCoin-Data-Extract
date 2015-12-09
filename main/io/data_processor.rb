@@ -28,11 +28,7 @@ class DataProcessor
     claimants.map do |claimant|
       projects_sql = claimant.projects.map { |project| project.to_sql(claimant.id) }
 
-      wallets = Set.new
-      claimant.projects.each { |project| wallets.add(project.wallet) }
-      wallets_sql = wallets.map { |wallet| wallet.to_sql }
-
-      claimant.to_sql + "\n" + projects_sql.join("\n") + "\n" + wallets_sql.join("\n") + "\n"
+      [claimant.to_sql, projects_sql].join("\n").concat("\n")
     end
   end
 
@@ -92,7 +88,7 @@ class DataProcessor
   def create_periodic_grant(claimant, project, grant_date)
     guid = generate_grant_guid('PGRT', claimant.id, project, grant_date)
     amount = 180 * project.nameplate * 0.15 # 6 months = 180 days
-    Grant.new(guid, project.wallet, amount, 'PGRT', grant_date, project.id)
+    Grant.new(guid, project.wallet_address, amount, 'PGRT', grant_date, project.id)
   end
 
   def generate_adjustment_grant(claimant)
@@ -106,7 +102,7 @@ class DataProcessor
 
       Logger.debug("Generated Grant -> #{guid}")
 
-      Grant.new(guid, project.wallet, amount, 'AGRT', grant_date, project.id)
+      Grant.new(guid, project.wallet_address, amount, 'AGRT', grant_date, project.id)
     end
   end
 
@@ -145,15 +141,18 @@ class DataProcessor
   end
 
   def generate_grant_guid(type_tag, claimant_id, project, grant_date)
-    county_code = IsoCountryCodes.search_by_name('australia').first.alpha2
-    "#{type_tag}-" +
-        "#{county_code}-" +
-        "#{project.post_code}-" +
-        "#{project.id}-" +
-        "#{project.nameplate}-" +
-        "#{claimant_id}-" +
-        "#{project.install_date}-" +
-        "#{grant_date}"
+    guid = [
+        type_tag,
+        IsoCountryCodes.search_by_name(project.country).first.alpha2,
+        project.post_code,
+        project.id,
+        project.nameplate,
+        claimant_id,
+        project.install_date,
+        grant_date
+    ]
+
+    guid.join('-')
   end
 
 end

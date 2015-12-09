@@ -11,7 +11,7 @@ class Project
   attr_accessor :documentation
   attr_accessor :status
   attr_accessor :created_at
-  attr_accessor :wallet
+  attr_accessor :wallet_address
 
   def initialize(id, project_hash)
     self.id = id
@@ -36,8 +36,6 @@ class Project
       Date.parse("#{date_string[2]}-#{date_string[0]}-#{date_string[1]}").to_s
     when :created_at
       DateTime.strptime(value, '%m/%d/%y %H:%M')
-    when :wallet
-      Wallet.new(value, self.id)
     else
       value #no transformation
     end
@@ -60,7 +58,6 @@ class Project
   def to_sql(claimant_id)
     columns = '('
     self.instance_variables.each do |member|
-      next if member == :@wallet
       columns << extract_member_accessor(member) << ', '
     end
     columns << 'claimant_id, updated_at)'
@@ -68,7 +65,6 @@ class Project
     values = '('
     self.instance_variables.each do |member|
       member_value = self.instance_variable_get(member)
-      next if member == :@wallet
       if member_value.class == String || member_value.class == DateTime
         values << "\"#{member_value}\"" << ', '
       else
@@ -93,7 +89,7 @@ class Project
         :documentation => self.documentation,
         :created_at => self.created_at,
         :status => self.status,
-        :wallet => wallet
+        :wallet_address => wallet_address
     }.to_json(*args)
   end
 
@@ -136,8 +132,6 @@ class Project
         :install_date
       when 'Utility Interconnection Date'
         :install_date
-      when 'SolarCoin Public Wallet Address'
-        :wallet
       when 'File Upload'
         :documentation
       when 'Link'
@@ -146,6 +140,8 @@ class Project
         :status
       when 'Entry Date'
         :created_at
+      when 'SolarCoin Public Wallet Address'
+        :wallet_address
       else
         :unknown
     end
