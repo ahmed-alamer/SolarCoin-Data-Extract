@@ -10,7 +10,6 @@ require '../main/io/data_processor'
 require '../main/io/logger'
 require '../main/models/claimant'
 require '../main/models/project'
-require '../main/models/wallet'
 require '../main/models/grant'
 
 DATA_DIRECTORY = '/home/ahmed/solar-coin-data'

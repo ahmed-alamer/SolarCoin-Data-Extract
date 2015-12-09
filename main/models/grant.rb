@@ -47,9 +47,7 @@ class Grant
       accessor = extract_accessor(var)
       value = self.send(accessor)
 
-      if accessor == 'wallet'
-        values << "(SELECT id FROM wallets WHERE public_address = '#{@wallet.public_address}')"
-      elsif value.class == Fixnum || value.class == Float
+      if value.class == Fixnum || value.class == Float
         values << value
       else
         values << '"' + value.to_s + '"'
