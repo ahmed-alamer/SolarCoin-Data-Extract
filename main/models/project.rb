@@ -60,7 +60,7 @@ class Project
     self.instance_variables.each do |member|
       columns << extract_member_accessor(member) << ', '
     end
-    columns << 'claimant_id, updated_at)'
+    columns << 'claimant_id, adjusted, updated_at)'
 
     values = '('
     self.instance_variables.each do |member|
@@ -71,7 +71,7 @@ class Project
         values << "#{member_value}" << ', '
       end
     end
-    values << "#{claimant_id}, '#{created_at}');"
+    values << "#{claimant_id}, true, '#{created_at}');"
 
     "INSERT INTO projects #{columns} VALUES #{values}"
   end
