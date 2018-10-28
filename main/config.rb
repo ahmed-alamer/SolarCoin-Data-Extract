@@ -12,7 +12,7 @@ require '../main/models/claimant'
 require '../main/models/project'
 require '../main/models/grant'
 
-DATA_DIRECTORY = '/home/ahmed/solar-coin-data'
+DATA_DIRECTORY = '/Users/ahmed/solar-coin-data'
 
 INPUT_DIRECTORY = "#{DATA_DIRECTORY}/input"
 CLAIMS_DIRECTORY_REGEX = "#{INPUT_DIRECTORY}/claims/*.json"

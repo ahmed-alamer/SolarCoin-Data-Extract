@@ -65,13 +65,16 @@ class Project
     values = '('
     self.instance_variables.each do |member|
       member_value = self.instance_variable_get(member)
-      if member_value.class == String || member_value.class == DateTime
+      if member_value.class == String
         values << "\"#{member_value}\"" << ', '
+      elsif member_value.class == DateTime
+        Logger.debug("Bullshit - #{member_value.strftime('%FT%R')}")
+        values << "\"#{member_value.strftime('%FT%R')}\"" << ', '
       else
         values << "#{member_value}" << ', '
       end
     end
-    values << "#{claimant_id}, true, '#{created_at}');"
+    values << "#{claimant_id}, true, '#{created_at.strftime('%FT%R')}');"
 
     "INSERT INTO projects #{columns} VALUES #{values}"
   end
